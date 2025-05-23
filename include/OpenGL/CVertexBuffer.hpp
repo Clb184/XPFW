@@ -1,0 +1,4 @@
+#ifndef VERTEXBUFFER_INCLUDED
+#define VERTEXBUFFER_INCLUDED
+
+#endif

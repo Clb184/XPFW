@@ -1,0 +1,4 @@
+#ifndef ISHADER_INCLUDED
+#define ISHADER_INCLUDED
+
+#endif

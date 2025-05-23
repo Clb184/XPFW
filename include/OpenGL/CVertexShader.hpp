@@ -1,0 +1,4 @@
+#ifndef VERTEXSHADER_INCLUDED
+#define VERTEXSHADER_INCLUDED
+
+#endif

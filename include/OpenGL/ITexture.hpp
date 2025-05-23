@@ -1,0 +1,4 @@
+#ifndef ITEXTURE_INCLUDED
+#define ITEXTURE_INCLUDED
+
+#endif

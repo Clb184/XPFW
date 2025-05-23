@@ -1,0 +1,4 @@
+#ifndef IBUFFER_INCLUDED
+#define IBUFFER_INCLUDED
+
+#endif
