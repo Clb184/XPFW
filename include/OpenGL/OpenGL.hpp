@@ -2,7 +2,7 @@
 #define OPENGLMAIN_INCLUDED
 
 // Shader stuff
-#include "IShader.hpp"
+#include "CShaderFactory.hpp"
 #include "CShaderProgram.hpp"
 #include "CFragmentShader.hpp"
 #include "CVertexShader.hpp"

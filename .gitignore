@@ -2,3 +2,5 @@ out/
 .vs/
 build/
 *.exe 
+deps/glew/
+include/sal.h
