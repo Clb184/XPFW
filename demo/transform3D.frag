@@ -1,6 +1,6 @@
 #version 450 core
 
-vec4 out_color;
+out vec4 out_color;
 
 //Texture2D g_Texture : register(t0);                                                  
 uniform sampler2D g_Texture;                                  
@@ -23,7 +23,9 @@ layout(std140, binding = 2) uniform WorldLight {
     vec4 CameraPos;
 };                                                                                
                                                                                              
-void main() {                                        
+void main() {
+    out_color = VS_OUT.color;
+    return;
     vec4 finalcolor = vec4(1.0); //texture2D(g_Texture, VS_OUT.texcoord);   
     vec3 norm = normalize(VS_OUT.normals);                   
     // max(dot(norm, -normalize(GlobalLightRot.xyz)), 0.0f)

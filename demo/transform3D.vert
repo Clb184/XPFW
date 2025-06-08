@@ -27,7 +27,10 @@ layout(std140, binding = 1) uniform Normals {
     mat3 normMat;                                                       
 };                                                                          
                                                                                     
-void main() {                                                         
+void main() {                                             
+    VS_OUT.color = COLOR;           
+    gl_Position = vec4(POSITION, 1.0f);
+    return;
     vec3 curpos = POSITION;                                         
     vec4 CameraPos = vec4(curpos, 1.0f) * model * View;
     VS_OUT.pos2 = model * vec4(curpos, 1.0f);
