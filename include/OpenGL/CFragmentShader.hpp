@@ -1,4 +1,8 @@
 #ifndef FRAGMENTSHADER_INCLUDED
 #define FRAGMENTSHADER_INCLUDED
 
+namespace Clb184 {
+
+}
+
 #endif

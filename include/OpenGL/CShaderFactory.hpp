@@ -2,7 +2,7 @@
 #define CSHADERFACTORY_INCLUDED
 
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <stdint.h>
 
 namespace Clb184 {
 	class CShaderFactory {

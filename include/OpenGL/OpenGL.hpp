@@ -7,11 +7,13 @@
 #include "CFragmentShader.hpp"
 #include "CVertexShader.hpp"
 
+#include "CVertexBuffer.hpp"
+#include "CVertexAttribute.hpp"
+
 #include "CConstantBuffer.hpp"
 #include "CIndexBuffer.hpp"
 #include "CRenderTexture.hpp"
 #include "CTexture2D.hpp"
-#include "CVertexBuffer.hpp"
 #include "IBuffer.hpp"
 #include "ITexture.hpp"
 
