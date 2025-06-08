@@ -50,6 +50,11 @@ namespace Clb184 {
 		float z = 0.0f;
 	};
 
+	constexpr int T3DAttributeCount = 4; // Pos, UV, Color
+	static attribute_info_t g_T3DAttributes[] = {
+		{0, 3, GL_FLOAT, GL_FALSE, sizeof(TVertex3D), (const void*)(sizeof(float) * 0)},
+	};
+
 	// 3D point with texture coordinates and color
 	struct TLVertex3D {
 		// Vertex position
@@ -68,6 +73,14 @@ namespace Clb184 {
 		float i = 0.0f;
 		float j = 0.0f;
 		float k = 0.0f;
+	};
+
+	constexpr int TL3DAttributeCount = 4; // Pos, UV, Color
+	static attribute_info_t g_TL3DAttributes[] = {
+		{0, 3, GL_FLOAT, GL_FALSE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 0)},
+		{1, GL_BGRA, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 3)},
+		{2, 2, GL_FLOAT, GL_FALSE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 4)},
+		{3, 3, GL_FLOAT, GL_FALSE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 6)},
 	};
 }
 #endif
