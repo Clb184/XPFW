@@ -4,6 +4,7 @@ namespace Clb184 {
 
 	CVertexAttribute::CVertexAttribute() {
 		m_VertexArrayID = -1;
+		m_Stride = 0;
 	}
 
 	CVertexAttribute::~CVertexAttribute() {
