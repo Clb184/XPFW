@@ -6,6 +6,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <DirectXMath.h>
+
 GLchar* g_pVertSrc = nullptr;
 GLchar* g_pFragSrc = nullptr;
 
@@ -53,12 +55,80 @@ void* LoadFromFile(const char* filename, size_t* size) {
 	return nullptr;
 }
 
+struct CameraMatrix {
+	float camera[16] = {
+	1.0f, 0.0, 0.0, 0.0,
+	0.0, 1.0f, 0.0, 0.0,
+	0.0, 0.0, 1.0f, 0.0,
+	0.0, 0.0, 0.0, 1.0f,
+	};
+};
+
+struct CameraData {
+	GLuint buffer;
+	float pos[3] = {};
+	float pos_vec[3] = {};
+	float rot[3] = {};
+	CameraMatrix mt;
+};
+
+void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	CameraData* data = (CameraData*)glfwGetWindowUserPointer(window);
+	if (action == GLFW_PRESS) {
+		switch (key) {
+		case GLFW_KEY_W:
+			data->pos_vec[1] = 0.01;
+			break;
+		case GLFW_KEY_A:
+			data->pos_vec[0] = -0.01;
+			break;
+		case GLFW_KEY_S:
+			data->pos_vec[1] = -0.01;
+			break;
+		case GLFW_KEY_D:
+			data->pos_vec[0] = 0.01;
+			break;
+		case GLFW_KEY_SPACE:
+			data->pos_vec[2] = -0.01;
+			break;
+		case GLFW_KEY_LEFT_CONTROL:
+			data->pos_vec[2] = 0.01;
+			break;
+		}
+
+	}
+	else if (action == GLFW_RELEASE) {
+		switch (key) {
+		case GLFW_KEY_W:
+			data->pos_vec[1] = 0.0;
+			break;
+		case GLFW_KEY_A:
+			data->pos_vec[0] = 0.0;
+			break;
+		case GLFW_KEY_S:
+			data->pos_vec[1] = 0.0;
+			break;
+		case GLFW_KEY_D:
+			data->pos_vec[0] = 0.0;
+			break;
+		case GLFW_KEY_SPACE:
+			data->pos_vec[2] = 0.0;
+			break;
+		case GLFW_KEY_LEFT_CONTROL:
+			data->pos_vec[2] = 0.0;
+			break;
+		}
+	}
+}
+
 int main() {
 
 	if (0 == glfwInit()) return -1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	CameraData cmdata;
 
 	GLFWwindow* win = glfwCreateWindow(512, 512, " ", nullptr, nullptr);
 	if (nullptr == win) return -1;
@@ -67,8 +137,8 @@ int main() {
 	if (GLEW_OK != glewInit()) return -1;
 
 	size_t sz_vert = 0, sz_frag = 0;
-	g_pVertSrc = (GLchar*)LoadTextFromFile("transform3D.vert", &sz_vert);
-	g_pFragSrc = (GLchar*)LoadTextFromFile("transform3D.frag", &sz_frag);
+	g_pVertSrc = (GLchar*)LoadTextFromFile("Transform3D.vert", &sz_vert);
+	g_pFragSrc = (GLchar*)LoadTextFromFile("Transform3D.frag", &sz_frag);
 
 	Clb184::CShaderFactory factory;
 	Clb184::CShaderProgram program;
@@ -82,11 +152,14 @@ int main() {
 		printf("OpenGL Error %d\n", e);
 	}
 
+
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
-	glDepthFunc(GL_GEQUAL);
+	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
-	glDepthRange(1.0f, -1.0f);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthRange(-1.0f, 1.0f);
 
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -94,12 +167,12 @@ int main() {
 
 	Clb184::TLVertex3D verts[] = {
 		{ 0.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 1.0f, 0.0f, 0.0f,   0xffffff00,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 0.0f, 1.0f, 1.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 10.0f, 0.0f, 0.0f,   0xffffff00,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 0.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 
-		{ 0.0f, 0.0f, 1.0f,   0x00ffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 1.0f, 0.0f, 0.0f,   0x0000ff00,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 0.0f, 1.0f, 0.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 0.0f, 0.0f, -1.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 10.0f, 10.0f, 1.0f,   0xff00ff00,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 0.0f, 10.0f, 1.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 	};
 
 	Clb184::CVertexBuffer vbuffer;
@@ -142,21 +215,20 @@ int main() {
 		printf("OpenGL Error %d\n", e);
 	}
 
-	struct {
-		float camera[16] = {};
-		float view[16] = {};
-		float proj[16] = {};
-		float Fog[4] = {};
-		float ExpFog[4] = {};
-		float Density = 0;
-	} CameraMatrix;
+	glfwSetWindowUserPointer(win, &cmdata);
+	glfwSetKeyCallback(win, CameraKeyCallback);
 
 	GLuint cbs[3];
 	glCreateBuffers(3, cbs);
 
 	// First binding (General data)
 	glBindBuffer(GL_UNIFORM_BUFFER, cbs[0]);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraMatrix), &CameraMatrix, GL_DYNAMIC_DRAW);
+	cmdata.buffer = cbs[0];
+	cmdata.pos[0] = 0.0f;
+	cmdata.pos[1] = -0.5f;
+	cmdata.pos[2] = -10.0f;
+	
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(cmdata.mt), &cmdata.mt, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, cbs[0]);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -164,8 +236,12 @@ int main() {
 
 
 	struct {
-		float Model[16];
-		float NormalMatrix[16];
+		float Model[16] = {
+		1.0f, 0.0, 0.0, 0.0,
+		0.0, 1.0f, 0.0, 0.0,
+		0.0, 0.0, 1.0f, 0.0,
+		0.0, 0.0, 0.0, 1.0f,
+		};
 	} Normals;
 
 	// Second binding (Model and Normal data)
@@ -177,12 +253,7 @@ int main() {
 	}
 
 	struct {
-		float globallightdir[4];
-		float ambient[4];
-		float Fog[4];
-		float globallightcolor[4];
-		float specularcolor[4];
-		float camerapos[4];
+		float ambient[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 	} WorldLight;
 
 	// Third binding (Global light data)
@@ -196,10 +267,23 @@ int main() {
 	while (!glfwWindowShouldClose(win)) {
 		glfwPollEvents();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		cmdata.pos[0] += cmdata.pos_vec[0];
+		cmdata.pos[1] += cmdata.pos_vec[1];
+		cmdata.pos[2] += cmdata.pos_vec[2];
 
 
+		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
+		CameraMatrix* pData = (CameraMatrix*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
 
+		DirectX::XMVECTOR eye_pos = { cmdata.pos[0], cmdata.pos[1], cmdata.pos[2], 1.0f};
+		DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
+		DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
+		DirectX::XMMATRIX cam_eye = eye * cam;
+		memcpy(&pData->camera, &cam_eye, sizeof(DirectX::XMMATRIX));
+		glUnmapBuffer(GL_UNIFORM_BUFFER);
 		//glDrawArrays(GL_TRIANGLES, 0, 3 * 4);
 		vbuffer.Bind();
 		while (GLenum e = glGetError()) {
@@ -214,7 +298,7 @@ int main() {
 			printf("OpenGL Error %d\n", e);
 		}
 
-
+		printf("x: %.3f, y: %.3f, z: %.3f\n", cmdata.pos[0], cmdata.pos[1], cmdata.pos[2]);
 		glfwSwapBuffers(win);
 	}
 
