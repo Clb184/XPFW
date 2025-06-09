@@ -9,16 +9,18 @@ out struct vsout {
     vec2 texcoord;
 } VS_OUT;
 
-layout(std140, binding = 0) uniform CameraMatrix {
-    mat4 camMat;        // view * proj
+layout(std140, binding = 0) uniform CameraData {
+    mat4 camera; // view * proj
 };
 
-uniform mat4 g_Model;
+layout(std140, binding = 1) uniform ModelData {
+    mat4 model;
+};
                                                                                     
 void main() {
     vec3 curpos = POSITION;
-    vec4 pos = g_Model * vec4(curpos, 1.0f);
-    VS_OUT.position = camMat * pos;
+    vec4 pos = model * vec4(curpos, 1.0f);
+    VS_OUT.position = camera * pos;
     VS_OUT.texcoord = TEXCOORD;
     VS_OUT.color = COLOR;
     VS_OUT.texcoord.y = 1.0f - VS_OUT.texcoord.y;
