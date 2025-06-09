@@ -16,6 +16,9 @@ namespace Clb184 {
 		void Bind();
 		void* Lock();
 		void Unlock(size_t size);
+
+		GLuint GettBufferID() const;
+
 	private:
 		void DestroyBuffer();
 

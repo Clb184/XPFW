@@ -167,11 +167,11 @@ int main() {
 
 	Clb184::TLVertex3D verts[] = {
 		{ 0.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 10.0f, 0.0f, 0.0f,   0xffffff00,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 0.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 10.0f, 0.0f, 0.0f,   0x00ffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 0.0f, 10.0f, 0.0f,   0x0000ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 
-		{ 0.0f, 0.0f, -1.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 10.0f, 10.0f, 1.0f,   0xff00ff00,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 0.0f, 0.0f, -1.0f,   0xffff00ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 10.0f, 10.0f, 1.0f,   0x00ff00ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 		{ 0.0f, 10.0f, 1.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 	};
 
@@ -179,7 +179,11 @@ int main() {
 	Clb184::CVertexAttribute vattribute;
 	vbuffer.Create(sizeof(verts), verts, GL_STATIC_DRAW);
 	vattribute.Create();
-	vattribute.SetAttributeData(Clb184::g_TL3DAttributes, Clb184::TL3DAttributeCount);
+	vbuffer.Bind();
+	GLuint vbuffers[Clb184::TL3DAttributeCount] = { vbuffer.GettBufferID(), vbuffer.GettBufferID(), vbuffer.GettBufferID(), vbuffer.GettBufferID() };
+	GLintptr voffsets[Clb184::TL3DAttributeCount] = { 0, 0 * sizeof(float), 0 * sizeof(float), 0 * sizeof(float)};
+	GLsizei vbstrides[Clb184::TL3DAttributeCount] = { sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D) };
+	vattribute.SetAttributeData(Clb184::TL3DAttributeCount, Clb184::g_TL3DAttributes, vbuffers, voffsets, vbstrides);
 
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -206,11 +210,7 @@ int main() {
 
 	GLuint draw_buffer_cmd = -1;
 	glCreateBuffers(1, &draw_buffer_cmd);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer_cmd);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
-	glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW);
+	glNamedBufferData(draw_buffer_cmd, sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
 	}
@@ -222,13 +222,12 @@ int main() {
 	glCreateBuffers(3, cbs);
 
 	// First binding (General data)
-	glBindBuffer(GL_UNIFORM_BUFFER, cbs[0]);
 	cmdata.buffer = cbs[0];
 	cmdata.pos[0] = 0.0f;
 	cmdata.pos[1] = -0.5f;
 	cmdata.pos[2] = -10.0f;
 	
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(cmdata.mt), &cmdata.mt, GL_DYNAMIC_DRAW);
+	glNamedBufferData(cbs[0], sizeof(cmdata.mt), &cmdata.mt, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, cbs[0]);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -245,8 +244,7 @@ int main() {
 	} Normals;
 
 	// Second binding (Model and Normal data)
-	glBindBuffer(GL_UNIFORM_BUFFER, cbs[1]);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(Normals), &Normals, GL_DYNAMIC_DRAW);
+	glNamedBufferData(cbs[1], sizeof(Normals), &Normals, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, cbs[1]);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -257,8 +255,7 @@ int main() {
 	} WorldLight;
 
 	// Third binding (Global light data)
-	glBindBuffer(GL_UNIFORM_BUFFER, cbs[2]);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(WorldLight), &WorldLight, GL_DYNAMIC_DRAW);
+	glNamedBufferData(cbs[2], sizeof(WorldLight), &WorldLight, GL_DYNAMIC_DRAW);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 2, cbs[2]);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -275,17 +272,18 @@ int main() {
 		cmdata.pos[2] += cmdata.pos_vec[2];
 
 
-		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
-		CameraMatrix* pData = (CameraMatrix*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+		CameraMatrix* pData = (CameraMatrix*)glMapNamedBuffer(cmdata.buffer, GL_WRITE_ONLY);
 
 		DirectX::XMVECTOR eye_pos = { cmdata.pos[0], cmdata.pos[1], cmdata.pos[2], 1.0f};
 		DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
 		DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
 		DirectX::XMMATRIX cam_eye = eye * cam;
 		memcpy(&pData->camera, &cam_eye, sizeof(DirectX::XMMATRIX));
-		glUnmapBuffer(GL_UNIFORM_BUFFER);
+		glUnmapNamedBuffer(cmdata.buffer);
 		//glDrawArrays(GL_TRIANGLES, 0, 3 * 4);
-		vbuffer.Bind();
+		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
+		//vbuffer.Bind();
+		vattribute.Bind();
 		while (GLenum e = glGetError()) {
 			printf("OpenGL Error %d\n", e);
 		}

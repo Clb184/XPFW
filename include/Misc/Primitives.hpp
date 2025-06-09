@@ -17,7 +17,7 @@ namespace Clb184 {
 
 	constexpr int T2DAttributeCount = 3; // Pos, UV, Color
 	static attribute_info_t g_T2DAttributes[] = {
-		{0, 2, GL_FLOAT, GL_FALSE, sizeof(TVertex2D), (const void*)(sizeof(float) * 0)},
+		{0, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 0)},
 	};
 
 
@@ -37,9 +37,9 @@ namespace Clb184 {
 
 	constexpr int TL2DAttributeCount = 3; // Pos, UV, Color
 	static attribute_info_t g_TL2DAttributes[] = {
-		{0, 2, GL_FLOAT, GL_FALSE, sizeof(TLVertex2D), (const void*)(sizeof(float) * 0)},
-		{1, 2, GL_FLOAT, GL_FALSE, sizeof(TLVertex2D), (const void*)(sizeof(float) * 2)},
-		{2, GL_BGRA, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TLVertex2D), (const void*)(sizeof(float) * 4)}
+		{0, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 0)},
+		{1, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 2)},
+		{2, 4, GL_UNSIGNED_BYTE, GL_TRUE, (sizeof(float) * 4)}
 	};
 
 
@@ -52,7 +52,7 @@ namespace Clb184 {
 
 	constexpr int T3DAttributeCount = 4; // Pos, UV, Color
 	static attribute_info_t g_T3DAttributes[] = {
-		{0, 3, GL_FLOAT, GL_FALSE, sizeof(TVertex3D), (const void*)(sizeof(float) * 0)},
+		{0, 3, GL_FLOAT, GL_FALSE, (sizeof(float) * 0)},
 	};
 
 	// 3D point with texture coordinates and color
@@ -77,10 +77,10 @@ namespace Clb184 {
 
 	constexpr int TL3DAttributeCount = 4; // Pos, UV, Color
 	static attribute_info_t g_TL3DAttributes[] = {
-		{0, 3, GL_FLOAT, GL_FALSE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 0)},
-		{1, GL_BGRA, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 3)},
-		{2, 2, GL_FLOAT, GL_FALSE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 4)},
-		{3, 3, GL_FLOAT, GL_FALSE, sizeof(TLVertex3D), (const void*)(sizeof(float) * 6)},
+		{0, 3, GL_FLOAT, GL_FALSE,(sizeof(float) * 0)},
+		{1, 4, GL_UNSIGNED_BYTE, GL_TRUE, (sizeof(float) * 3)},
+		{2, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 4)},
+		{3, 3, GL_FLOAT, GL_FALSE, (sizeof(float) * 6)},
 	};
 }
 #endif

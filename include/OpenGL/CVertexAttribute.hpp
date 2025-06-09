@@ -10,8 +10,12 @@ namespace Clb184 {
 		GLint size = 0;
 		GLenum type = GL_FLOAT;
 		GLboolean normalized = GL_FALSE;
-		GLsizei stride = 0;
-		const void* ptr = 0;
+		GLuint ptr = 0;
+	};
+
+	struct buffer_info_t {
+		GLuint buffer = -1;
+		GLuint stride = 0;
 	};
 
 	class CVertexAttribute {
@@ -21,7 +25,7 @@ namespace Clb184 {
 
 		bool Create();
 		// You have to bind a vertex buffer first to use this
-		void SetAttributeData(const attribute_info_t* stride_data, int num_attributes);
+		void SetAttributeData(int num_attributes, const attribute_info_t* stride_data, const GLuint* buffers, const GLintptr* offsets, const GLsizei* strides);
 		void Bind();
 
 	private:
