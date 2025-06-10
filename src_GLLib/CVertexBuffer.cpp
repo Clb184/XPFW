@@ -31,7 +31,7 @@ namespace Clb184 {
 		glUnmapNamedBuffer(m_BufferID);
 	}
 
-	GLuint CVertexBuffer::GettBufferID() const {
+	GLuint CVertexBuffer::GetBufferID() const {
 		return m_BufferID;
 	}
 

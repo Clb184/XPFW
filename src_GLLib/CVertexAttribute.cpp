@@ -20,19 +20,19 @@ namespace Clb184 {
 		return true;
 	}
 
-	void CVertexAttribute::SetAttributeData(int num_attributes, const attribute_info_t* stride_data, const GLuint* buffers, const GLintptr* offsets, const GLsizei* strides) {
+	void CVertexAttribute::SetAttributeData(int num_attributes, const attribute_info_t* attribute_data, const buffer_info_t* buffer_data) {
 		GLuint varray = m_VertexArrayID;
  		for (int i = 0; i < num_attributes; i++) {
 			// Put attributes in its place
-			if (stride_data[i].type == GL_INT || stride_data[i].type == GL_UNSIGNED_INT)
-				glVertexArrayAttribIFormat(varray, stride_data[i].index, stride_data[i].size, stride_data[i].type, stride_data[i].ptr);
+			if (attribute_data[i].type == GL_INT || attribute_data[i].type == GL_UNSIGNED_INT)
+				glVertexArrayAttribIFormat(varray, attribute_data[i].index, attribute_data[i].size, attribute_data[i].type, attribute_data[i].ptr);
 			else
-				glVertexArrayAttribFormat(varray, stride_data[i].index, stride_data[i].size, stride_data[i].type, stride_data[i].normalized, stride_data[i].ptr);
+				glVertexArrayAttribFormat(varray, attribute_data[i].index, attribute_data[i].size, attribute_data[i].type, attribute_data[i].normalized, attribute_data[i].ptr);
 
 			// And enable the attribute
-			glEnableVertexArrayAttrib(varray, stride_data[i].index);
+			glEnableVertexArrayAttrib(varray, attribute_data[i].index);
 		}
-		glVertexArrayVertexBuffers(varray, 0, num_attributes, buffers,offsets, strides);
+		glVertexArrayVertexBuffers(varray, 0, num_attributes, buffer_data->buffer, buffer_data->offset, buffer_data->stride);
 	}
 
 	void CVertexAttribute::Bind() {

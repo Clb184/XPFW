@@ -177,13 +177,7 @@ int main() {
 
 	Clb184::CVertexBuffer vbuffer;
 	Clb184::CVertexAttribute vattribute;
-	vbuffer.Create(sizeof(verts), verts, GL_STATIC_DRAW);
-	vattribute.Create();
-	vbuffer.Bind();
-	GLuint vbuffers[Clb184::TL3DAttributeCount] = { vbuffer.GettBufferID(), vbuffer.GettBufferID(), vbuffer.GettBufferID(), vbuffer.GettBufferID() };
-	GLintptr voffsets[Clb184::TL3DAttributeCount] = { 0, 0 * sizeof(float), 0 * sizeof(float), 0 * sizeof(float)};
-	GLsizei vbstrides[Clb184::TL3DAttributeCount] = { sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D) };
-	vattribute.SetAttributeData(Clb184::TL3DAttributeCount, Clb184::g_TL3DAttributes, vbuffers, voffsets, vbstrides);
+	Clb184::CreateTL3DVertexBuffer(sizeof(verts), verts, GL_STATIC_DRAW, &vattribute, &vbuffer);
 
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);

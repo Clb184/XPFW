@@ -14,8 +14,9 @@ namespace Clb184 {
 	};
 
 	struct buffer_info_t {
-		GLuint buffer = -1;
-		GLuint stride = 0;
+		GLuint* buffer = nullptr;
+		GLintptr* offset = nullptr;
+		GLsizei* stride = nullptr;
 	};
 
 	class CVertexAttribute {
@@ -25,7 +26,7 @@ namespace Clb184 {
 
 		bool Create();
 		// You have to bind a vertex buffer first to use this
-		void SetAttributeData(int num_attributes, const attribute_info_t* stride_data, const GLuint* buffers, const GLintptr* offsets, const GLsizei* strides);
+		void SetAttributeData(int num_attributes, const attribute_info_t* stride_data, const buffer_info_t* buffer_data);
 		void Bind();
 
 	private:
