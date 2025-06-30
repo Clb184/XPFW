@@ -11,7 +11,7 @@ in struct vsout {
     vec2 texcoord;
 } VS_OUT;
 
-layout(std140, binding = 2) uniform WorldLight {
+layout(std430, binding = 2) readonly buffer WorldLight {
     vec4 Ambient;
 };
 

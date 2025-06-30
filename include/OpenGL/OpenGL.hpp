@@ -7,6 +7,7 @@
 #include "CFragmentShader.hpp"
 #include "CVertexShader.hpp"
 
+#include "Buffer.hpp"
 #include "CVertexBuffer.hpp"
 #include "CVertexAttribute.hpp"
 

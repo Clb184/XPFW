@@ -75,24 +75,25 @@ struct CameraData {
 void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	CameraData* data = (CameraData*)glfwGetWindowUserPointer(window);
 	if (action == GLFW_PRESS) {
+		const float speed = 0.05f;
 		switch (key) {
 		case GLFW_KEY_W:
-			data->pos_vec[1] = 0.01;
+			data->pos_vec[2] = speed;
 			break;
 		case GLFW_KEY_A:
-			data->pos_vec[0] = -0.01;
+			data->pos_vec[0] = -speed;
 			break;
 		case GLFW_KEY_S:
-			data->pos_vec[1] = -0.01;
+			data->pos_vec[2] = -speed;
 			break;
 		case GLFW_KEY_D:
-			data->pos_vec[0] = 0.01;
+			data->pos_vec[0] = speed;
 			break;
 		case GLFW_KEY_SPACE:
-			data->pos_vec[2] = -0.01;
+			data->pos_vec[1] = speed;
 			break;
 		case GLFW_KEY_LEFT_CONTROL:
-			data->pos_vec[2] = 0.01;
+			data->pos_vec[1] = -speed;
 			break;
 		}
 
@@ -100,22 +101,22 @@ void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 	else if (action == GLFW_RELEASE) {
 		switch (key) {
 		case GLFW_KEY_W:
-			data->pos_vec[1] = 0.0;
+			data->pos_vec[2] = 0.0;
 			break;
 		case GLFW_KEY_A:
 			data->pos_vec[0] = 0.0;
 			break;
 		case GLFW_KEY_S:
-			data->pos_vec[1] = 0.0;
+			data->pos_vec[2] = 0.0;
 			break;
 		case GLFW_KEY_D:
 			data->pos_vec[0] = 0.0;
 			break;
 		case GLFW_KEY_SPACE:
-			data->pos_vec[2] = 0.0;
+			data->pos_vec[1] = 0.0;
 			break;
 		case GLFW_KEY_LEFT_CONTROL:
-			data->pos_vec[2] = 0.0;
+			data->pos_vec[1] = 0.0;
 			break;
 		}
 	}
@@ -166,22 +167,17 @@ int main() {
 	}
 
 	Clb184::TLVertex3D verts[] = {
-		{ 0.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 10.0f, 0.0f, 0.0f,   0x00ffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 0.0f, 10.0f, 0.0f,   0x0000ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-
-		{ 0.0f, 0.0f, -1.0f,   0xffff00ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 10.0f, 10.0f, 1.0f,   0x00ff00ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 0.0f, 10.0f, 1.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ -5.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 5.0f, 10.0f, 0.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ -5.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 	};
 
-	Clb184::CVertexBuffer vbuffer;
-	Clb184::CVertexAttribute vattribute;
-	Clb184::CreateTL3DVertexBuffer(sizeof(verts), verts, GL_STATIC_DRAW, &vattribute, &vbuffer);
-
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
+	GLuint vbuffer = -1;
+	GLuint vattrib = -1;
+	Clb184::CreateTL3DVertexBuffer(6, verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
 
 	float identity[] = {
 		1.0f, 0.0f, 0.0f, 0.0f,
@@ -202,58 +198,49 @@ int main() {
 	} draw_cmd;
 
 
+	Clb184::buffer_descriptor_t buf = { sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW};
 	GLuint draw_buffer_cmd = -1;
-	glCreateBuffers(1, &draw_buffer_cmd);
-	glNamedBufferData(draw_buffer_cmd, sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
+	Clb184::CreateBuffer(&buf, &draw_buffer_cmd);
 
 	glfwSetWindowUserPointer(win, &cmdata);
 	glfwSetKeyCallback(win, CameraKeyCallback);
 
-	GLuint cbs[3];
-	glCreateBuffers(3, cbs);
-
-	// First binding (General data)
-	cmdata.buffer = cbs[0];
-	cmdata.pos[0] = 0.0f;
-	cmdata.pos[1] = -0.5f;
-	cmdata.pos[2] = -10.0f;
-	
-	glNamedBufferData(cbs[0], sizeof(cmdata.mt), &cmdata.mt, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, cbs[0]);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
 
 
-	struct {
+	// Normaldata
+	struct Normals {
 		float Model[16] = {
 		1.0f, 0.0, 0.0, 0.0,
 		0.0, 1.0f, 0.0, 0.0,
 		0.0, 0.0, 1.0f, 0.0,
 		0.0, 0.0, 0.0, 1.0f,
 		};
-	} Normals;
-
-	// Second binding (Model and Normal data)
-	glNamedBufferData(cbs[1], sizeof(Normals), &Normals, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, cbs[1]);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
+	} normals;
 
 	struct {
-		float ambient[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+		float ambient[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	} WorldLight;
 
-	// Third binding (Global light data)
-	glNamedBufferData(cbs[2], sizeof(WorldLight), &WorldLight, GL_DYNAMIC_DRAW);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, cbs[2]);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
+	Clb184::buffer_descriptor_t buf_desc[3] = {
+		{sizeof(cmdata.mt), &cmdata.mt, GL_DYNAMIC_DRAW},
+		{sizeof(normals), &normals, GL_DYNAMIC_DRAW},
+		{sizeof(WorldLight), &WorldLight, GL_DYNAMIC_DRAW}
+	};
+	GLuint cbs[3] = { -1,-1,-1 };
+
+	Clb184::CreateBuffers(buf_desc, cbs, 3);
+	
+	// First binding (General data)
+	cmdata.buffer = cbs[0];
+	cmdata.pos[0] = 0.0f;
+	cmdata.pos[1] = -0.5f;
+	cmdata.pos[2] = -10.0f;
+
+	Clb184::BindConstantBuffer(cbs[0], 0);
+	Clb184::BindConstantBuffer(cbs[1], 1);
+	Clb184::BindConstantBuffer(cbs[2], 2);
+
+	glfwSwapInterval(1);
 
 	while (!glfwWindowShouldClose(win)) {
 		glfwPollEvents();
@@ -270,6 +257,7 @@ int main() {
 
 		DirectX::XMVECTOR eye_pos = { cmdata.pos[0], cmdata.pos[1], cmdata.pos[2], 1.0f};
 		DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
+		//DirectX::XMMATRIX eye = DirectX::XMMatrixLookAtLH(eye_pos, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
 		DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
 		DirectX::XMMATRIX cam_eye = eye * cam;
 		memcpy(&pData->camera, &cam_eye, sizeof(DirectX::XMMATRIX));
@@ -277,7 +265,7 @@ int main() {
 		//glDrawArrays(GL_TRIANGLES, 0, 3 * 4);
 		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
 		//vbuffer.Bind();
-		vattribute.Bind();
+		glBindVertexArray(vattrib);
 		while (GLenum e = glGetError()) {
 			printf("OpenGL Error %d\n", e);
 		}
@@ -290,7 +278,7 @@ int main() {
 			printf("OpenGL Error %d\n", e);
 		}
 
-		printf("x: %.3f, y: %.3f, z: %.3f\n", cmdata.pos[0], cmdata.pos[1], cmdata.pos[2]);
+		//printf("x: %.3f, y: %.3f, z: %.3f\n", cmdata.pos[0], cmdata.pos[1], cmdata.pos[2]);
 		glfwSwapBuffers(win);
 	}
 

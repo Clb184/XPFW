@@ -2,7 +2,9 @@
 #define PRIMITIVES_INCLUDED
 
 #include <stdint.h>
-#include "../OpenGL/CVertexAttribute.hpp"
+#include <assert.h>
+#include "Output.hpp"
+#include "../OpenGL/Buffer.hpp"
 
 /********************************************************************
 * Note: These are just my default primitives to just drop and use
@@ -76,15 +78,15 @@ namespace Clb184 {
 	};
 
 
-	inline void CreateTL3DVertexBuffer(size_t data_size, TLVertex3D* pdata, GLenum usage, CVertexAttribute* attribute, CVertexBuffer* vbuffer) {
+	inline void CreateTL3DVertexBuffer(size_t num_vertex, TLVertex3D* pdata, GLenum usage, GLuint* vbuffer, GLuint* vattribute) {
+		assert(nullptr != vbuffer);
+		assert(nullptr != vattribute);
 
-		GLuint buffer = -1;
+		buffer_descriptor_t vbd = { num_vertex * sizeof(TLVertex3D), pdata, usage};
+		GLuint vb = -1;
+		CreateBuffer(&vbd, &vb);
 
-		vbuffer->Create(data_size, pdata, GL_STATIC_DRAW);
-		attribute->Create();
-
-		buffer = vbuffer->GetBufferID();
-
+		GLuint va = -1;
 		constexpr int TL3DAttributeCount = 4; // Pos, UV, Color
 		attribute_info_t TL3DAttributes[] = {
 		{0, 3, GL_FLOAT, GL_FALSE,(sizeof(float) * 0)},
@@ -93,13 +95,16 @@ namespace Clb184 {
 		{3, 3, GL_FLOAT, GL_FALSE, (sizeof(float) * 6)},
 		};
 
-		GLuint vbuffers[TL3DAttributeCount] = { buffer, buffer, buffer, buffer };
+		GLuint vbuffers[TL3DAttributeCount] = { vb, vb, vb, vb };
 		GLintptr voffsets[TL3DAttributeCount] = { 0, 0, 0, 0 };
 		GLsizei vbstrides[TL3DAttributeCount] = { sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D) };
 
 		buffer_info_t buffinfo = { vbuffers, voffsets, vbstrides };
 
-		attribute->SetAttributeData(TL3DAttributeCount, TL3DAttributes, &buffinfo);
+		CreateVertexAttributes(TL3DAttributeCount, TL3DAttributes, &buffinfo, &va);
+
+		*vbuffer = vb;
+		*vattribute = va;
 	}
 }
 #endif

@@ -2,22 +2,9 @@
 #define VERTEXATTRIBUTE_INCLUDED
 
 #include <GL/glew.h>
+#include "Buffer.hpp"
 
 namespace Clb184 {
-
-	struct attribute_info_t {
-		GLuint index = 0;
-		GLint size = 0;
-		GLenum type = GL_FLOAT;
-		GLboolean normalized = GL_FALSE;
-		GLuint ptr = 0;
-	};
-
-	struct buffer_info_t {
-		GLuint* buffer = nullptr;
-		GLintptr* offset = nullptr;
-		GLsizei* stride = nullptr;
-	};
 
 	class CVertexAttribute {
 	public:
