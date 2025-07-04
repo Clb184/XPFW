@@ -8,6 +8,7 @@
 #include "CVertexShader.hpp"
 
 #include "Buffer.hpp"
+#include "Shader.hpp"
 #include "CVertexBuffer.hpp"
 #include "CVertexAttribute.hpp"
 

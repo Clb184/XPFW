@@ -131,28 +131,11 @@ int main() {
 
 	CameraData cmdata;
 
-	GLFWwindow* win = glfwCreateWindow(512, 512, " ", nullptr, nullptr);
+	GLFWwindow* win = glfwCreateWindow(512, 512, "OpenGL 4.6", nullptr, nullptr);
 	if (nullptr == win) return -1;
 	glfwMakeContextCurrent(win);
 
 	if (GLEW_OK != glewInit()) return -1;
-
-	size_t sz_vert = 0, sz_frag = 0;
-	g_pVertSrc = (GLchar*)LoadTextFromFile("Transform3D.vert", &sz_vert);
-	g_pFragSrc = (GLchar*)LoadTextFromFile("Transform3D.frag", &sz_frag);
-
-	Clb184::CShaderFactory factory;
-	Clb184::CShaderProgram program;
-	GLuint vrt = factory.CreateShader(GL_VERTEX_SHADER, g_pVertSrc, 1);
-	GLuint frg = factory.CreateShader(GL_FRAGMENT_SHADER, g_pFragSrc, 1);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
-	if(false == program.CreateProgram(vrt, frg)) return -1;
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
-
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -165,6 +148,13 @@ int main() {
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
 	}
+
+	GLuint vrt, frg, prg;
+	Clb184::LoadShaderFromFile("Transform3D.vert", &vrt, GL_VERTEX_SHADER);
+	Clb184::LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
+
+	if(false == Clb184::CreateProgram(vrt, frg, &prg)) return -1;
+
 
 	Clb184::TLVertex3D verts[] = {
 		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
@@ -185,7 +175,7 @@ int main() {
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
-	program.Bind();
+	glUseProgram(prg);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
 	}
