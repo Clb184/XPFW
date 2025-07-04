@@ -1,8 +1,0 @@
-#ifndef CONSTANTBUFFER_INCLUDED
-#define CONSTANTBUFFER_INCLUDED
-
-namespace Clb184 {
-
-}
-
-#endif
