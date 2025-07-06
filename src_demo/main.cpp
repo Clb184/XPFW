@@ -8,53 +8,6 @@
 
 #include <DirectXMath.h>
 
-GLchar* g_pVertSrc = nullptr;
-GLchar* g_pFragSrc = nullptr;
-
-void* LoadTextFromFile(const char* filename, size_t* size) {
-	size_t sz;
-	FILE* fp;
-	if (fp = fopen(filename, "r")) {
-		fseek(fp, 0, SEEK_END);
-		sz = ftell(fp);
-		rewind(fp);
-
-		void* data = calloc(sz, 1);
-		if (data) {
-			fread(data, sz, 1, fp);
-			if (size) {
-				*size = sz;
-			}
-			fclose(fp);
-		}
-		return data;
-	}
-
-	return nullptr;
-}
-
-void* LoadFromFile(const char* filename, size_t* size) {
-	size_t sz;
-	FILE* fp;
-	if (fp = fopen(filename, "rb")) {
-		fseek(fp, 0, SEEK_END);
-		sz = ftell(fp);
-		rewind(fp);
-
-		void* data = malloc(sz);
-		if (data) {
-			fread(data, sz, 1, fp);
-			if (size) {
-				*size = sz;
-			}
-			fclose(fp);
-		}
-		return data;
-	}
-
-	return nullptr;
-}
-
 struct CameraMatrix {
 	float camera[16] = {
 	1.0f, 0.0, 0.0, 0.0,
@@ -69,57 +22,47 @@ struct CameraData {
 	float pos[3] = {};
 	float pos_vec[3] = {};
 	float rot[3] = {};
+	int mov_bits = 0;
 	CameraMatrix mt;
 };
 
 void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	CameraData* data = (CameraData*)glfwGetWindowUserPointer(window);
+	const float speed = 0.05f;
+	int mov_bits = data->mov_bits;
 	if (action == GLFW_PRESS) {
-		const float speed = 0.05f;
 		switch (key) {
-		case GLFW_KEY_W:
-			data->pos_vec[2] = speed;
-			break;
-		case GLFW_KEY_A:
-			data->pos_vec[0] = -speed;
-			break;
-		case GLFW_KEY_S:
-			data->pos_vec[2] = -speed;
-			break;
-		case GLFW_KEY_D:
-			data->pos_vec[0] = speed;
-			break;
-		case GLFW_KEY_SPACE:
-			data->pos_vec[1] = speed;
-			break;
-		case GLFW_KEY_LEFT_CONTROL:
-			data->pos_vec[1] = -speed;
-			break;
+			case GLFW_KEY_W: mov_bits |= 1; break;
+			case GLFW_KEY_A: mov_bits |= 4; break;
+			case GLFW_KEY_S: mov_bits |= 2; break;
+			case GLFW_KEY_D: mov_bits |= 8; break;
+			case GLFW_KEY_SPACE: mov_bits |= 16; break;
+			case GLFW_KEY_LEFT_CONTROL: mov_bits |= 32; break;
 		}
+	}
+	if (action == GLFW_RELEASE) {
+		switch (key) {
+			case GLFW_KEY_W: mov_bits ^= 1; break;
+			case GLFW_KEY_A: mov_bits ^= 4; break;
+			case GLFW_KEY_S: mov_bits ^= 2; break;
+			case GLFW_KEY_D: mov_bits ^= 8; break;
+			case GLFW_KEY_SPACE: mov_bits ^= 16; break;
+			case GLFW_KEY_LEFT_CONTROL: mov_bits ^= 32; break;
+		}
+	}
+	float mov_vec[3] = { 0.0f };
+	// Position move vector
+	if (mov_bits & 1) mov_vec[2] += speed; // Z +
+	if (mov_bits & 2) mov_vec[2] -= speed; // Z -
+	if (mov_bits & 4) mov_vec[0] -= speed; // X -
+	if (mov_bits & 8) mov_vec[0] += speed; // X +
+	if (mov_bits & 16) mov_vec[1] += speed; // Y +
+	if (mov_bits & 32) mov_vec[1] -= speed; // Y -
 
-	}
-	else if (action == GLFW_RELEASE) {
-		switch (key) {
-		case GLFW_KEY_W:
-			data->pos_vec[2] = 0.0;
-			break;
-		case GLFW_KEY_A:
-			data->pos_vec[0] = 0.0;
-			break;
-		case GLFW_KEY_S:
-			data->pos_vec[2] = 0.0;
-			break;
-		case GLFW_KEY_D:
-			data->pos_vec[0] = 0.0;
-			break;
-		case GLFW_KEY_SPACE:
-			data->pos_vec[1] = 0.0;
-			break;
-		case GLFW_KEY_LEFT_CONTROL:
-			data->pos_vec[1] = 0.0;
-			break;
-		}
-	}
+	data->pos_vec[0] = mov_vec[0];
+	data->pos_vec[1] = mov_vec[1];
+	data->pos_vec[2] = mov_vec[2];
+	data->mov_bits = mov_bits;
 }
 
 int main() {
@@ -161,13 +104,17 @@ int main() {
 		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 		{ -5.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 		{ 5.0f, 10.0f, 0.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ -5.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
 	};
 
 	GLuint vbuffer = -1;
 	GLuint vattrib = -1;
 	Clb184::CreateTL3DVertexBuffer(6, verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
+
+	GLuint idxs[] = {0, 1, 2, 3, 1, 2};
+
+	Clb184::buffer_descriptor_t ibuffer_desc = {sizeof(GLuint) * 6, idxs, GL_DYNAMIC_DRAW};
+	GLuint ibuffer = -1;
+	Clb184::CreateBuffer(&ibuffer_desc, &ibuffer);
 
 	float identity[] = {
 		1.0f, 0.0f, 0.0f, 0.0f,
@@ -242,7 +189,6 @@ int main() {
 		cmdata.pos[1] += cmdata.pos_vec[1];
 		cmdata.pos[2] += cmdata.pos_vec[2];
 
-
 		CameraMatrix* pData = (CameraMatrix*)glMapNamedBuffer(cmdata.buffer, GL_WRITE_ONLY);
 
 		DirectX::XMVECTOR eye_pos = { cmdata.pos[0], cmdata.pos[1], cmdata.pos[2], 1.0f};
@@ -254,7 +200,6 @@ int main() {
 		glUnmapNamedBuffer(cmdata.buffer);
 		//glDrawArrays(GL_TRIANGLES, 0, 3 * 4);
 		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
-		//vbuffer.Bind();
 		glBindVertexArray(vattrib);
 		while (GLenum e = glGetError()) {
 			printf("OpenGL Error %d\n", e);
@@ -263,12 +208,12 @@ int main() {
 		while (GLenum e = glGetError()) {
 			printf("OpenGL Error %d\n", e);
 		}
-		glDrawArraysIndirect(GL_TRIANGLES, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
+		//glDrawArraysIndirect(GL_TRIANGLES, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		while (GLenum e = glGetError()) {
 			printf("OpenGL Error %d\n", e);
 		}
-
-		//printf("x: %.3f, y: %.3f, z: %.3f\n", cmdata.pos[0], cmdata.pos[1], cmdata.pos[2]);
 		glfwSwapBuffers(win);
 	}
 
