@@ -20,9 +20,7 @@ struct CameraMatrix {
 struct CameraData {
 	GLuint buffer;
 	float pos[4] = {};
-	float pos_vec[4] = {};
 	float rot[4] = {};
-	float rot_mov[4] = {};
 	CameraMatrix mt;
 	int mov_bits = 0;
 };
@@ -64,19 +62,44 @@ void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 	data->mov_bits = mov_bits;
 }
 
-void MoveCamera(CameraData* camera_data, int mov_bits) {
-	const float speed = 0.05f;
-	// Position move vector
-	if (mov_bits & 1)  camera_data->pos[2] += speed; // Z +
-	if (mov_bits & 2)  camera_data->pos[2] -= speed; // Z -
-	if (mov_bits & 4)  camera_data->pos[0] -= speed; // X -
-	if (mov_bits & 8)  camera_data->pos[0] += speed; // X +
-	if (mov_bits & 16) camera_data->pos[1] += speed; // Y +
-	if (mov_bits & 32) camera_data->pos[1] -= speed; // Y -
+void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
+	const float speed = 20.0f * delta_time;
 
+	const float rot_vel = 3.14159 * 0.5f * delta_time;
+	float rot_x = 0.0f, rot_y = 0.0f;
+	// Rotation
+	if (mov_bits & 256) rot_y -= rot_vel; // Y -
+	if (mov_bits & 512) rot_y += rot_vel; // Y +
+	if (mov_bits & 1024) rot_x -= rot_vel; // X +
+	if (mov_bits & 2048) rot_x += rot_vel; // X 
+	camera_data->rot[0] += rot_x;
+	camera_data->rot[1] += rot_y;
+	float mov_x = cosf(camera_data->rot[1]), mov_y = sinf(camera_data->rot[1]);
+
+	// Position move vector
+	float spd_front = 0.0f, spd_side = 0.0f;
+	if (mov_bits & 1)  spd_front += speed; // Z +
+	if (mov_bits & 2)  spd_front -= speed; // Z -
+	if (mov_bits & 4)  spd_side -= speed; // X -
+	if (mov_bits & 8)  spd_side += speed; // X +
+	if (mov_bits & 16) camera_data->pos[1] += speed; // Y +
+	if (mov_bits & 32) camera_data->pos[1] -= speed; // Y -+
+	camera_data->pos[0] += mov_y * spd_front + mov_x * spd_side;
+	camera_data->pos[2] += mov_x * spd_front - mov_y * spd_side;
+
+	// Rotate using quaternions
+	DirectX::XMVECTOR rot = DirectX::XMVectorMultiply(_mm_load_ps(camera_data->rot), DirectX::XMVectorReplicate(0.5f)); // Load and get the half already to use it with quaternions
+	DirectX::XMVECTOR sins = DirectX::XMVectorSin(rot); //Calculate sin of all axis
+	DirectX::XMVECTOR coss = DirectX::XMVectorCos(rot); //Same for cos
+	DirectX::XMFLOAT3 rts, rtc; //Sine and cosine Obtained
+	DirectX::XMStoreFloat3(&rts, sins);
+	DirectX::XMStoreFloat3(&rtc, coss);
+	DirectX::XMVECTOR q = DirectX::XMQuaternionMultiply(DirectX::XMVectorSet(rts.x, 0.0f, 0.0f, rtc.x), DirectX::XMVectorSet(0.0f, rts.y, 0.0f, rtc.y)); // Get the rotation of camera
+	DirectX::XMVECTOR o = (DirectX::XMVector4Transform(DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 1.0f), DirectX::XMMatrixRotationQuaternion(q)));
+	
 	// Update matrix
 	DirectX::XMVECTOR eye_pos = _mm_load_ps(camera_data->pos);
-	DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
+	DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, o, {0.0f, 1.0f, 0.0f});
 	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
 	DirectX::XMMATRIX cam_eye = eye * cam;
 
@@ -117,23 +140,26 @@ int main() {
 	Clb184::LoadShaderFromFile("Transform3D.vert", &vrt, GL_VERTEX_SHADER);
 	Clb184::LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
 
-	if(false == Clb184::CreateProgram(vrt, frg, &prg)) return -1;
-
+	if (false == Clb184::CreateProgram(vrt, frg, &prg)) return -1;
 
 	Clb184::TLVertex3D verts[] = {
-		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ -5.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
-		{ 5.0f, 10.0f, 0.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },
+		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },     // 0
+		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 1
+		{ -5.0f, 10.0f, 0.0f,   0xffff0000,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 2 
+		{ 5.0f, 10.0f, 0.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 3
+		{ -5.0f, 10.0f, -10.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },  // 4 
+		{ -5.0f, 0.0f, -10.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },   // 5
+		{ 5.0f, 10.0f, -10.0f,   0xffffffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },   // 6
+		{ 5.0f, 0.0f, -10.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 7
 	};
 
 	GLuint vbuffer = -1;
 	GLuint vattrib = -1;
-	Clb184::CreateTL3DVertexBuffer(6, verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
+	Clb184::CreateTL3DVertexBuffer(64, verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
 
-	GLuint idxs[] = {0, 1, 2, 3, 1, 2};
+	GLuint idxs[] = { 0, 1, 2, 3, 1, 2, 0, 2, 4, 4, 0, 5, 4, 5, 6, 5, 6, 7};
 
-	Clb184::buffer_descriptor_t ibuffer_desc = {sizeof(GLuint) * 6, idxs, GL_DYNAMIC_DRAW};
+	Clb184::buffer_descriptor_t ibuffer_desc = { sizeof(idxs), idxs, GL_DYNAMIC_DRAW };
 	GLuint ibuffer = -1;
 	Clb184::CreateBuffer(&ibuffer_desc, &ibuffer);
 
@@ -143,6 +169,7 @@ int main() {
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
+
 	glUseProgram(prg);
 	while (GLenum e = glGetError()) {
 		printf("OpenGL Error %d\n", e);
@@ -155,15 +182,12 @@ int main() {
 		GLuint base = 0;
 	} draw_cmd;
 
-
-	Clb184::buffer_descriptor_t buf = { sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW};
+	Clb184::buffer_descriptor_t buf = { sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW };
 	GLuint draw_buffer_cmd = -1;
 	Clb184::CreateBuffer(&buf, &draw_buffer_cmd);
 
 	glfwSetWindowUserPointer(win, &cmdata);
 	glfwSetKeyCallback(win, CameraKeyCallback);
-
-
 
 	// Normaldata
 	struct Normals {
@@ -187,43 +211,45 @@ int main() {
 	GLuint cbs[3] = { -1,-1,-1 };
 
 	Clb184::CreateBuffers(buf_desc, cbs, 3);
-	
+
 	// First binding (General data)
 	cmdata.buffer = cbs[0];
 	cmdata.pos[0] = 0.0f;
-	cmdata.pos[1] = -0.5f;
-	cmdata.pos[2] = -10.0f;
+	cmdata.pos[1] = 0.0f;
+	cmdata.pos[2] = -5.0f;
 
 	Clb184::BindConstantBuffer(cbs[0], 0);
 	Clb184::BindConstantBuffer(cbs[1], 1);
 	Clb184::BindConstantBuffer(cbs[2], 2);
 
-	glfwSwapInterval(1);
-
+	glfwSwapInterval(1); // Actually vsync
+	double delta_time = 0.0;
 	while (!glfwWindowShouldClose(win)) {
+		delta_time = glfwGetTime();
+		glfwSetTime(0.0);
+
+		// Process events and clear screen
 		glfwPollEvents();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		MoveCamera(&cmdata, cmdata.mov_bits);
-		//glDrawArrays(GL_TRIANGLES, 0, 3 * 4);
+		// Move logic and update stuff
+		MoveCamera(&cmdata, cmdata.mov_bits, delta_time);
 		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
 		glBindVertexArray(vattrib);
-		while (GLenum e = glGetError()) {
-			printf("OpenGL Error %d\n", e);
-		}
+		GL_ERROR();
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer_cmd);
-		while (GLenum e = glGetError()) {
-			printf("OpenGL Error %d\n", e);
-		}
+		GL_ERROR();
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
+
+		// Draw with command buffer or other related functions
 		//glDrawArraysIndirect(GL_TRIANGLES, 0);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		while (GLenum e = glGetError()) {
-			printf("OpenGL Error %d\n", e);
-		}
+		glDrawElements(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+		GL_ERROR();
+
+		// Move the Swap Chain
 		glfwSwapBuffers(win);
 	}
-
 }
