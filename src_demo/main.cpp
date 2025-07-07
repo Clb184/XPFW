@@ -65,7 +65,7 @@ void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	const float speed = 20.0f * delta_time;
 
-	const float rot_vel = 3.14159 * 0.5f * delta_time;
+	const float rot_vel = 3.14159 * 1.0f * delta_time;
 	float rot_x = 0.0f, rot_y = 0.0f;
 	// Rotation
 	if (mov_bits & 256) rot_y -= rot_vel; // Y -
@@ -100,7 +100,7 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	// Update matrix
 	DirectX::XMVECTOR eye_pos = _mm_load_ps(camera_data->pos);
 	DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, o, {0.0f, 1.0f, 0.0f});
-	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
+	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 16.0f/9.0f, 0.1f, 1000.0f);
 	DirectX::XMMATRIX cam_eye = eye * cam;
 
 	// Write and send data to the GPU
@@ -114,16 +114,18 @@ int main() {
 	if (0 == glfwInit()) return -1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_SAMPLES, 16);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	CameraData cmdata;
 
-	GLFWwindow* win = glfwCreateWindow(512, 512, "OpenGL 4.6", nullptr, nullptr);
+	GLFWwindow* win = glfwCreateWindow(1280, 720, "OpenGL 4.6", nullptr, nullptr);
 	if (nullptr == win) return -1;
 	glfwMakeContextCurrent(win);
 
 	if (GLEW_OK != glewInit()) return -1;
 
+	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
@@ -155,7 +157,7 @@ int main() {
 
 	GLuint vbuffer = -1;
 	GLuint vattrib = -1;
-	Clb184::CreateTL3DVertexBuffer(64, verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
+	Clb184::CreateTL3DVertexBuffer(sizeof(verts) / sizeof(Clb184::TLVertex3D), verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
 
 	GLuint idxs[] = { 0, 1, 2, 3, 1, 2, 0, 2, 4, 4, 0, 5, 4, 5, 6, 5, 6, 7};
 
