@@ -19,50 +19,71 @@ struct CameraMatrix {
 
 struct CameraData {
 	GLuint buffer;
-	float pos[3] = {};
-	float pos_vec[3] = {};
-	float rot[3] = {};
-	int mov_bits = 0;
+	float pos[4] = {};
+	float pos_vec[4] = {};
+	float rot[4] = {};
+	float rot_mov[4] = {};
 	CameraMatrix mt;
+	int mov_bits = 0;
 };
 
 void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	CameraData* data = (CameraData*)glfwGetWindowUserPointer(window);
-	const float speed = 0.05f;
 	int mov_bits = data->mov_bits;
 	if (action == GLFW_PRESS) {
 		switch (key) {
 			case GLFW_KEY_W: mov_bits |= 1; break;
-			case GLFW_KEY_A: mov_bits |= 4; break;
 			case GLFW_KEY_S: mov_bits |= 2; break;
+			case GLFW_KEY_A: mov_bits |= 4; break;
 			case GLFW_KEY_D: mov_bits |= 8; break;
 			case GLFW_KEY_SPACE: mov_bits |= 16; break;
 			case GLFW_KEY_LEFT_CONTROL: mov_bits |= 32; break;
+
+			case GLFW_KEY_LEFT: mov_bits |= 256; break;
+			case GLFW_KEY_RIGHT: mov_bits |= 512; break;
+			case GLFW_KEY_UP: mov_bits |= 1024; break;
+			case GLFW_KEY_DOWN: mov_bits |= 2048; break;
 		}
 	}
 	if (action == GLFW_RELEASE) {
 		switch (key) {
-			case GLFW_KEY_W: mov_bits ^= 1; break;
-			case GLFW_KEY_A: mov_bits ^= 4; break;
-			case GLFW_KEY_S: mov_bits ^= 2; break;
-			case GLFW_KEY_D: mov_bits ^= 8; break;
-			case GLFW_KEY_SPACE: mov_bits ^= 16; break;
-			case GLFW_KEY_LEFT_CONTROL: mov_bits ^= 32; break;
+			case GLFW_KEY_W: mov_bits &= ~1; break;
+			case GLFW_KEY_S: mov_bits &= ~2; break;
+			case GLFW_KEY_A: mov_bits &= ~4; break;
+			case GLFW_KEY_D: mov_bits &= ~8; break;
+			case GLFW_KEY_SPACE: mov_bits &= ~16; break;
+			case GLFW_KEY_LEFT_CONTROL: mov_bits &= ~32; break;
+
+			case GLFW_KEY_LEFT: mov_bits &= ~256; break;
+			case GLFW_KEY_RIGHT: mov_bits &= ~512; break;
+			case GLFW_KEY_UP: mov_bits &= ~1024; break;
+			case GLFW_KEY_DOWN: mov_bits &= ~2048; break;
 		}
 	}
-	float mov_vec[3] = { 0.0f };
-	// Position move vector
-	if (mov_bits & 1) mov_vec[2] += speed; // Z +
-	if (mov_bits & 2) mov_vec[2] -= speed; // Z -
-	if (mov_bits & 4) mov_vec[0] -= speed; // X -
-	if (mov_bits & 8) mov_vec[0] += speed; // X +
-	if (mov_bits & 16) mov_vec[1] += speed; // Y +
-	if (mov_bits & 32) mov_vec[1] -= speed; // Y -
 
-	data->pos_vec[0] = mov_vec[0];
-	data->pos_vec[1] = mov_vec[1];
-	data->pos_vec[2] = mov_vec[2];
 	data->mov_bits = mov_bits;
+}
+
+void MoveCamera(CameraData* camera_data, int mov_bits) {
+	const float speed = 0.05f;
+	// Position move vector
+	if (mov_bits & 1)  camera_data->pos[2] += speed; // Z +
+	if (mov_bits & 2)  camera_data->pos[2] -= speed; // Z -
+	if (mov_bits & 4)  camera_data->pos[0] -= speed; // X -
+	if (mov_bits & 8)  camera_data->pos[0] += speed; // X +
+	if (mov_bits & 16) camera_data->pos[1] += speed; // Y +
+	if (mov_bits & 32) camera_data->pos[1] -= speed; // Y -
+
+	// Update matrix
+	DirectX::XMVECTOR eye_pos = _mm_load_ps(camera_data->pos);
+	DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
+	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
+	DirectX::XMMATRIX cam_eye = eye * cam;
+
+	// Write and send data to the GPU
+	CameraMatrix* pData = (CameraMatrix*)glMapNamedBuffer(camera_data->buffer, GL_WRITE_ONLY);
+	memcpy(&pData->camera, &cam_eye, sizeof(DirectX::XMMATRIX));
+	glUnmapNamedBuffer(camera_data->buffer);
 }
 
 int main() {
@@ -185,19 +206,7 @@ int main() {
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		cmdata.pos[0] += cmdata.pos_vec[0];
-		cmdata.pos[1] += cmdata.pos_vec[1];
-		cmdata.pos[2] += cmdata.pos_vec[2];
-
-		CameraMatrix* pData = (CameraMatrix*)glMapNamedBuffer(cmdata.buffer, GL_WRITE_ONLY);
-
-		DirectX::XMVECTOR eye_pos = { cmdata.pos[0], cmdata.pos[1], cmdata.pos[2], 1.0f};
-		DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
-		//DirectX::XMMATRIX eye = DirectX::XMMatrixLookAtLH(eye_pos, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
-		DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 1.0f, 0.1f, 1000.0f);
-		DirectX::XMMATRIX cam_eye = eye * cam;
-		memcpy(&pData->camera, &cam_eye, sizeof(DirectX::XMMATRIX));
-		glUnmapNamedBuffer(cmdata.buffer);
+		MoveCamera(&cmdata, cmdata.mov_bits);
 		//glDrawArrays(GL_TRIANGLES, 0, 3 * 4);
 		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
 		glBindVertexArray(vattrib);
