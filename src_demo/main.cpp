@@ -141,8 +141,10 @@ int main() {
 	GLuint vrt, frg, prg;
 	Clb184::LoadShaderFromFile("Transform3D.vert", &vrt, GL_VERTEX_SHADER);
 	Clb184::LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
-
 	if (false == Clb184::CreateProgram(vrt, frg, &prg)) return -1;
+
+	GLuint tex = -1;
+	Clb184::LoadTextureFromFile("misaka.png", &tex);
 
 	Clb184::TLVertex3D verts[] = {
 		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },     // 0

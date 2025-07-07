@@ -23,8 +23,27 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-# Dependencies
+# Set some variables to disable stuff I don't want to build.
+# I only use static libs so I have less files to deal with,
+# and also use some debug postfix like d for debug builds
+set(CMAKE_DEBUG_POSTFIX "d")
+set(ZLIB_BUILD_STATIC ON)
+set(ZLIB_BUILD_SHARED OFF)
+set(PNG_STATIC ON)
+set(PNG_SHARED OFF)
+set(PNG_TESTS OFF)
+set(PNG_TOOLS OFF)
+set(PNG_EXECUTABLES OFF)
+if(WIN32)
+set(ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/deps/zlib/zs${CMAKE_DEBUG_POSTFIX}${CMAKE_STATIC_LIBRARY_SUFFIX}" )
+endif()
+set(ZLIB_INCLUDE_DIR "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
+set(ZLIB_ROOT "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
+
+# Add necessary GLFW, ZLib and LibPNG
 add_subdirectory(deps/glfw)
+add_subdirectory(deps/zlib/)
+add_subdirectory(deps/libpng/)
 
 add_compile_definitions(GLEW_STATIC)
 set(BUILD_UTILS OFF)
