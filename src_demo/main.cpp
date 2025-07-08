@@ -19,10 +19,11 @@ struct CameraMatrix {
 
 struct CameraData {
 	GLuint buffer;
+	int mov_bits = 0;
+	int pad[2];
 	float pos[4] = {};
 	float rot[4] = {};
 	CameraMatrix mt;
-	int mov_bits = 0;
 };
 
 void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -88,14 +89,14 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	camera_data->pos[2] += mov_x * spd_front - mov_y * spd_side;
 
 	// Rotate using quaternions
-	DirectX::XMVECTOR rot = DirectX::XMVectorMultiply(_mm_load_ps(camera_data->rot), DirectX::XMVectorReplicate(0.5f)); // Load and get the half already to use it with quaternions
-	DirectX::XMVECTOR sins = DirectX::XMVectorSin(rot); //Calculate sin of all axis
-	DirectX::XMVECTOR coss = DirectX::XMVectorCos(rot); //Same for cos
+	__m128 rot = _mm_mul_ps(_mm_load_ps(camera_data->rot), _mm_set_ps1(0.5f)); // Load and get the half already to use it with quaternions
+	__m128 sins = _mm_sin_ps(rot); //Calculate sin of all axis
+	__m128 coss = _mm_cos_ps(rot); //Same for cos
 	DirectX::XMFLOAT3 rts, rtc; //Sine and cosine Obtained
 	DirectX::XMStoreFloat3(&rts, sins);
 	DirectX::XMStoreFloat3(&rtc, coss);
-	DirectX::XMVECTOR q = DirectX::XMQuaternionMultiply(DirectX::XMVectorSet(rts.x, 0.0f, 0.0f, rtc.x), DirectX::XMVectorSet(0.0f, rts.y, 0.0f, rtc.y)); // Get the rotation of camera
-	DirectX::XMVECTOR o = (DirectX::XMVector4Transform(DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 1.0f), DirectX::XMMatrixRotationQuaternion(q)));
+	DirectX::XMVECTOR q = DirectX::XMQuaternionMultiply(_mm_set_ps(rtc.x, 0.0f, 0.0f, rts.x), _mm_set_ps(rtc.y, 0.0f, rts.y, 0.0f)); // Get the rotation of camera
+	DirectX::XMVECTOR o = (DirectX::XMVector4Transform(_mm_set_ps(1.0f, 1.0f, 0.0f, 0.0f), DirectX::XMMatrixRotationQuaternion(q)));
 	
 	// Update matrix
 	DirectX::XMVECTOR eye_pos = _mm_load_ps(camera_data->pos);
