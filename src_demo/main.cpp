@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include <DirectXMath.h>
+#include <miniaudio.h>
 
 struct CameraMatrix {
 	float camera[16] = {
@@ -110,8 +111,90 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	glUnmapNamedBuffer(camera_data->buffer);
 }
 
-int main() {
+struct audio_buffer_t {
+	int cnt = 0;
+	ma_audio_buffer buffers[64];
+};
 
+void DataPlayback (ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+	audio_buffer_t* abuffer = (audio_buffer_t*)pDevice->pUserData;
+	ma_int16* buf = (ma_int16*)pOutput;
+	ma_int16 buff[4096] = {0};
+	if (nullptr == abuffer) return;
+	for (int i = 0; i < abuffer->cnt; i++ ) {
+		ma_uint16 frms = ma_audio_buffer_read_pcm_frames(abuffer->buffers + i, buff, frameCount, false);
+		for (int j = 0; j < frms * 2; j++) {
+			int max = buf[j] + buff[j];
+			buf[j] = (max > INT16_MAX) ? INT16_MAX : (max < INT16_MIN) ? INT16_MIN : max;
+		}
+	}
+}
+
+void CreateSoundBuffer(ma_decoder* decoder, ma_uint64 frames, int channel, ma_int16** data) {
+	ma_int16* samples = new ma_int16[frames * channel + 2];
+	ma_int16* offset = samples;
+	ma_uint64 frm = 0;
+	ma_uint64 frm_total = 0;
+	do {
+		ma_decoder_read_pcm_frames(decoder, offset, 4096, &frm);
+		offset += frm * channel;
+		frm_total += frm;
+	} while (frm);
+	*data = samples;
+	return;
+}
+
+int main() {
+	
+	// Just a quick test on miniaudio, nothing fancy
+	ma_result res;
+	ma_decoder decoder;
+	ma_device_config audio_device_cfg;
+	ma_device audio_device;
+
+
+	ma_audio_buffer_config audio_buffer_cfg;
+	ma_audio_buffer audio_buffer;
+
+	res = ma_decoder_init_file("kog_09.wav", nullptr, &decoder);
+	ma_uint64 frms;
+	ma_decoder_get_available_frames(&decoder, &frms);
+	if (MA_SUCCESS != res) return -1;
+	
+	audio_buffer_t* pbuffers = new audio_buffer_t;
+
+	audio_device_cfg = ma_device_config_init(ma_device_type_playback);
+	audio_device_cfg.playback.format = ma_format_s16;
+	audio_device_cfg.playback.channels = 2;
+	audio_device_cfg.sampleRate = 44100;
+	audio_device_cfg.dataCallback = DataPlayback;
+	audio_device_cfg.pUserData = pbuffers;
+
+	ma_int16* pdata = nullptr;
+	CreateSoundBuffer(&decoder, frms, 2, &pdata);
+	audio_buffer_cfg = ma_audio_buffer_config_init(ma_format_s16, 2, frms, pdata, nullptr);
+
+
+	if (MA_SUCCESS != ma_device_init(nullptr, &audio_device_cfg, &audio_device)) {
+		ma_decoder_uninit(&decoder);
+		return -1;
+	}
+
+	if (MA_SUCCESS != ma_device_start(&audio_device)) {
+		ma_device_uninit(&audio_device);
+		ma_decoder_uninit(&decoder);
+		return -1;
+	}
+
+	for (int i = 0; i < 4; i++) {
+		ma_audio_buffer_init(&audio_buffer_cfg, &pbuffers->buffers[i]);
+		pbuffers->cnt++;
+		_sleep(200);
+	}
+
+	ma_device_set_master_volume(&audio_device, 0.5f);
+
+	// Back with OpenGL...
 	if (0 == glfwInit()) return -1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -257,4 +340,7 @@ int main() {
 		// Move the Swap Chain
 		glfwSwapBuffers(win);
 	}
+
+	ma_device_uninit(&audio_device);
+	ma_decoder_uninit(&decoder);
 }

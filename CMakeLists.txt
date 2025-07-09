@@ -44,6 +44,7 @@ set(ZLIB_ROOT "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
 add_subdirectory(deps/glfw)
 add_subdirectory(deps/zlib/)
 add_subdirectory(deps/libpng/)
+add_subdirectory(deps/miniaudio)
 
 add_compile_definitions(GLEW_STATIC)
 set(BUILD_UTILS OFF)
