@@ -122,7 +122,7 @@ void DataPlayback (ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
 	ma_int16 buff[4096] = {0};
 	if (nullptr == abuffer) return;
 	for (int i = 0; i < abuffer->cnt; i++ ) {
-		ma_uint16 frms = ma_audio_buffer_read_pcm_frames(abuffer->buffers + i, buff, frameCount, false);
+		ma_uint64 frms = ma_audio_buffer_read_pcm_frames(abuffer->buffers + i, buff, frameCount, false);
 		for (int j = 0; j < frms * 2; j++) {
 			int max = buf[j] + buff[j];
 			buf[j] = (max > INT16_MAX) ? INT16_MAX : (max < INT16_MIN) ? INT16_MIN : max;
@@ -154,7 +154,6 @@ int main() {
 
 
 	ma_audio_buffer_config audio_buffer_cfg;
-	ma_audio_buffer audio_buffer;
 
 	res = ma_decoder_init_file("kog_09.wav", nullptr, &decoder);
 	ma_uint64 frms;
