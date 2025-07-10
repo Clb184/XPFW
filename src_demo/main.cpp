@@ -123,7 +123,7 @@ void DataPlayback (ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
 	if (nullptr == abuffer) return;
 	for (int i = 0; i < abuffer->cnt; i++ ) {
 		ma_uint64 frms = ma_audio_buffer_read_pcm_frames(abuffer->buffers + i, buff, frameCount, false);
-		for (int j = 0; j < frms * 2; j++) {
+		for (ma_uint64 j = 0; j < frms * 2; j++) {
 			int max = buf[j] + buff[j];
 			buf[j] = (max > INT16_MAX) ? INT16_MAX : (max < INT16_MIN) ? INT16_MIN : max;
 		}
