@@ -37,13 +37,33 @@ namespace Clb184 {
 		uint32_t color = 0xffffffff;
 	};
 
-	constexpr int TL2DAttributeCount = 3; // Pos, UV, Color
-	static attribute_info_t g_TL2DAttributes[] = {
-		{0, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 0)},
-		{1, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 2)},
-		{2, 4, GL_UNSIGNED_BYTE, GL_TRUE, (sizeof(float) * 4)}
-	};
+	inline void CreateTL2DVertexBuffer(size_t num_vertex, TLVertex2D* pdata, GLenum usage, GLuint* vbuffer, GLuint* vattribute) {
+		assert(nullptr != vbuffer);
+		assert(nullptr != vattribute);
 
+		buffer_descriptor_t vbd = { num_vertex * sizeof(TLVertex2D), pdata, usage };
+		GLuint vb = -1;
+		CreateBuffer(&vbd, &vb);
+
+		GLuint va = -1;
+		constexpr int TL2DAttributeCount = 3; // Pos, UV, Color
+		attribute_info_t TL2DAttributes[] = {
+			{0, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 0)},
+			{1, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 2)},
+			{2, 4, GL_UNSIGNED_BYTE, GL_TRUE, (sizeof(float) * 4)}
+		};
+
+		GLuint vbuffers[TL2DAttributeCount] = { vb, vb, vb };
+		GLintptr voffsets[TL2DAttributeCount] = { 0, 0, 0 };
+		GLsizei vbstrides[TL2DAttributeCount] = { sizeof(Clb184::TLVertex2D), sizeof(Clb184::TLVertex2D), sizeof(Clb184::TLVertex2D) };
+
+		buffer_info_t buffinfo = { vbuffers, voffsets, vbstrides };
+
+		CreateVertexAttributes(TL2DAttributeCount, TL2DAttributes, &buffinfo, &va);
+
+		*vbuffer = vb;
+		*vattribute = va;
+	}
 
 	// 3D point
 	struct TVertex3D {
