@@ -23,6 +23,14 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
+# sal.h for DirectXMath
+if(MSVC)
+	message("sal.h already comes with VS...")
+else()
+	message("Getting sal.h for DirectXMath")
+	execute_process(COMMAND curl -L --output ${CMAKE_HOME_DIRECTORY}/include/sal.h https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h)
+endif()
+
 # Set some variables to disable stuff I don't want to build.
 # I only use static libs so I have less files to deal with,
 # and also use some debug postfix like d for debug builds
@@ -45,6 +53,7 @@ add_subdirectory(deps/glfw)
 add_subdirectory(deps/zlib/)
 add_subdirectory(deps/libpng/)
 add_subdirectory(deps/miniaudio)
+add_subdirectory(deps/DirectXMath)
 
 add_compile_definitions(GLEW_STATIC)
 set(BUILD_UTILS OFF)

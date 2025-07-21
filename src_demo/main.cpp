@@ -6,6 +6,12 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef __linux__
+	#include <algorithm>
+	#include <iterator>
+	#include <utility>
+	#include <format>
+#endif
 #include <DirectXMath.h>
 #include <miniaudio.h>
 
@@ -145,7 +151,7 @@ void CreateSoundBuffer(ma_decoder* decoder, ma_uint64 frames, int channel, ma_in
 }
 
 int main() {
-	
+	/*
 	// Just a quick test on miniaudio, nothing fancy
 	ma_result res;
 	ma_decoder decoder;
@@ -191,7 +197,7 @@ int main() {
 		_sleep(200);
 	}
 
-	ma_device_set_master_volume(&audio_device, 0.5f);
+	ma_device_set_master_volume(&audio_device, 0.5f);*/
 
 	// Back with OpenGL...
 	if (0 == glfwInit()) return -1;
@@ -239,7 +245,7 @@ int main() {
 		{-1.0f, 0.0f, 0.0f, 1.0f, 0xffffffff},
 	};
 	int mw, mh;
-	Clb184::LoadTextureFromFile("misaka.png", &tex, &mw, &mh);
+	Clb184::LoadTextureFromFile("mikoto.png", &tex, &mw, &mh);
 	GLuint mvbo, mvao;
 	Clb184::CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &mvbo, &mvao);
 
