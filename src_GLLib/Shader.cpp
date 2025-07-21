@@ -5,7 +5,7 @@
 
 namespace Clb184 {
 	bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shader_type) {
-		LOG_INFO("Creating shader (File)");
+		LOG_INFO("Creating Shader (File)");
 		assert(nullptr != shader_unit);
 
 		char* src = nullptr;
