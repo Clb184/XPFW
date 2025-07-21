@@ -185,7 +185,7 @@ int main() {
 	ma_uint64 frms;
 	ma_decoder_get_available_frames(&decoder, &frms);
 	if (MA_SUCCESS != res) return -1;
-	
+
 	audio_buffer_t* pbuffers = new audio_buffer_t;
 
 	audio_device_cfg = ma_device_config_init(ma_device_type_playback);
@@ -232,7 +232,7 @@ int main() {
 	if (nullptr == win) return -1;
 	glfwMakeContextCurrent(win);
 #ifdef WIN32
-	if (GLEW_OK != glewInit()) LOG_ERROR("Failed initializing GLEW"); return -1;
+	if (GLEW_OK != glewInit()) { LOG_ERROR("Failed initializing GLEW"); return -1; }
 #elif defined linux
 	glewInit();
 #endif
@@ -252,12 +252,12 @@ int main() {
 	GLuint vrt, frg, prg;
 	Clb184::LoadShaderFromFile("Transform3D.vert", &vrt, GL_VERTEX_SHADER);
 	Clb184::LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
-	if (false == Clb184::CreateProgram(vrt, frg, &prg)) LOG_ERROR("Failed creating 3D shader"); return -1;
+	if (false == Clb184::CreateProgram(vrt, frg, &prg)) { LOG_ERROR("Failed creating 3D shader"); return -1; }
 
 	GLuint vrt2, frg2, prg2;
 	Clb184::LoadShaderFromFile("T&L2D.vert", &vrt2, GL_VERTEX_SHADER);
 	Clb184::LoadShaderFromFile("T&L2D.frag", &frg2, GL_FRAGMENT_SHADER);
-	if (false == Clb184::CreateProgram(vrt2, frg2, &prg2)) LOG_ERROR("Failed creating 2D shader"); return -1;
+	if (false == Clb184::CreateProgram(vrt2, frg2, &prg2)) { LOG_ERROR("Failed creating 2D shader"); return -1; }
 
 
 	GLuint tex = -1;
