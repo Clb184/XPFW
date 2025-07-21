@@ -185,7 +185,7 @@ int main() {
 		return -1;
 	}
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 0; i++) {
 		ma_audio_buffer_init(&audio_buffer_cfg, &pbuffers->buffers[i]);
 		pbuffers->cnt++;
 		_sleep(200);
@@ -209,7 +209,6 @@ int main() {
 	if (GLEW_OK != glewInit()) return -1;
 
 	glEnable(GL_MULTISAMPLE);
-	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
@@ -226,8 +225,23 @@ int main() {
 	Clb184::LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
 	if (false == Clb184::CreateProgram(vrt, frg, &prg)) return -1;
 
+	GLuint vrt2, frg2, prg2;
+	Clb184::LoadShaderFromFile("T&L2D.vert", &vrt2, GL_VERTEX_SHADER);
+	Clb184::LoadShaderFromFile("T&L2D.frag", &frg2, GL_FRAGMENT_SHADER);
+	if (false == Clb184::CreateProgram(vrt2, frg2, &prg2)) return -1;
+
+
 	GLuint tex = -1;
-	Clb184::LoadTextureFromFile("misaka.png", &tex);
+	Clb184::TLVertex2D mvert[4] = {
+		{0.0f, -1.0f, 1.0f, 0.0f, 0xffffffff},
+		{0.0f, 0.0f, 1.0f, 1.0f, 0xffffffff},
+		{-1.0f, -1.0f, 0.0f, 0.0f, 0xffffffff},
+		{-1.0f, 0.0f, 0.0f, 1.0f, 0xffffffff},
+	};
+	int mw, mh;
+	Clb184::LoadTextureFromFile("misaka.png", &tex, &mw, &mh);
+	GLuint mvbo, mvao;
+	Clb184::CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &mvbo, &mvao);
 
 	Clb184::TLVertex3D verts[] = {
 		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },     // 0
@@ -256,14 +270,14 @@ int main() {
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
+	glUseProgram(prg2);
+	GL_ERROR();
 
 	glUseProgram(prg);
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
+	GL_ERROR();
 
 	struct draw_cmd_t {
-		GLuint count = sizeof(verts) / sizeof(Clb184::TLVertex3D);
+		GLuint count = sizeof(mvert) / sizeof(Clb184::TLVertex2D);
 		GLuint instance_cnt = 1;
 		GLuint first = 0;
 		GLuint base = 0;
@@ -311,6 +325,12 @@ int main() {
 
 	glfwSwapInterval(1); // Actually vsync
 	double delta_time = 0.0;
+
+	GLuint sampler;
+	Clb184::CreateSampler(&sampler);
+	Clb184::SetSamplerTextureMode(sampler, GL_NEAREST);
+	Clb184::SetSamplerWrapMode(sampler, GL_REPEAT, GL_REPEAT);
+
 	while (!glfwWindowShouldClose(win)) {
 		delta_time = glfwGetTime();
 		glfwSetTime(0.0);
@@ -322,18 +342,30 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Move logic and update stuff
+		glUseProgram(prg);
 		MoveCamera(&cmdata, cmdata.mov_bits, delta_time);
 		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
 		glBindVertexArray(vattrib);
 		GL_ERROR();
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer_cmd);
-		GL_ERROR();
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
 
 		// Draw with command buffer or other related functions
-		//glDrawArraysIndirect(GL_TRIANGLES, 0);
+		glEnable(GL_DEPTH_TEST);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
 		glDrawElements(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+		GL_ERROR();
+
+		glDisable(GL_DEPTH_TEST);
+		glUseProgram(prg2);
+		glUniformMatrix4fv(0, 1, GL_FALSE, identity);
+		GL_ERROR();
+		glBindVertexArray(mvao);
+		glActiveTexture(GL_TEXTURE0);
+		glBindSampler(0, sampler);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer_cmd);
+		GL_ERROR();
+		glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 		GL_ERROR();
 
 		// Move the Swap Chain
