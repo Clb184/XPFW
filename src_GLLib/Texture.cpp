@@ -40,7 +40,12 @@ namespace Clb184 {
 		png_bytep chardata = nullptr;
 
 		// Load data for checking signature
-		if (false == LoadDataFromFile(png_title, (void**)&chardata, nullptr)) return 0;
+		if (false == LoadDataFromFile(png_title, (void**)&chardata, nullptr)) {
+			char buf[1024] = "";
+			sprintf(buf, "\"%s\" does not exist", name); 
+			LOG_ERROR(buf); 
+			return false;
+		}
 
 		// Check for PNG signature
 		if (0 == png_sig_cmp(chardata, 0, 16)) {
@@ -53,7 +58,7 @@ namespace Clb184 {
 			sprintf(buf, "Failed opening PNG image, \"%s\" is not valid", name);
 			LOG_ERROR(buf);
 			free(chardata);
-			return 0;
+			return false;
 		}
 
 		// Create the corresponding decoder and reader structs
@@ -63,7 +68,8 @@ namespace Clb184 {
 		png_infop png_info = png_create_info_struct(png_reader);
 		if (nullptr == png_info) {
 			png_destroy_read_struct(&png_reader, nullptr, nullptr);
-			return 0;
+			free(chardata);
+			return false;
 		}
 
 		// Create a fake file to load texture data from
@@ -82,6 +88,8 @@ namespace Clb184 {
 		char* pixel_data = (char*)malloc(width * height * channels);
 		if (setjmp(png_jmpbuf(png_reader))) {
 			png_destroy_read_struct(&png_reader, &png_info, nullptr);
+			free(chardata);
+			return false;
 		}
 		// Same for row pointers and set them
 		char** ppRows = (char**)malloc(sizeof(char*) * width);
@@ -98,9 +106,7 @@ namespace Clb184 {
 		CreateTexture(tex_unit, width, height, pixel_data);
 
 		// And finally, release the decoder struct and free memory
-		LOG_INFO("Releasing PNG struct");
 		png_destroy_read_struct(&png_reader, &png_info, nullptr);
-		LOG_INFO("Freeing memory");
 		free(chardata);
 		free(pixel_data);
 		free(ppRows);
