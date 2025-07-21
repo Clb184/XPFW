@@ -1,7 +1,7 @@
 #ifndef SHADER_INCLUDED
 #define SHADER_INCLUDED
 
-#include <gl/glew.h>
+#include <GL/glew.h>
 
 namespace Clb184 {
 	bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shader_type);
