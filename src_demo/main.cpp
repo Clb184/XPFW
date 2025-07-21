@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <emmintrin.h>
 
 #ifdef __linux__
 	#include <algorithm>
@@ -315,7 +316,7 @@ int main() {
 		{sizeof(normals), &normals, GL_DYNAMIC_DRAW},
 		{sizeof(WorldLight), &WorldLight, GL_DYNAMIC_DRAW}
 	};
-	GLuint cbs[3] = { -1,-1,-1 };
+	GLuint cbs[3] = { 0xffffffff, 0xffffffff, 0xffffffff };
 
 	Clb184::CreateBuffers(buf_desc, cbs, 3);
 
