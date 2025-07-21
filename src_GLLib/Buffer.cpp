@@ -6,9 +6,9 @@ namespace Clb184 {
 
 	// Creates a buffer
 	bool CreateBuffer(const buffer_descriptor_t* descriptor, GLuint* buffer_id) {
+		LOG_INFO("Creating Buffer");
 		assert(nullptr != descriptor);
 		assert(nullptr != buffer_id);
-
 		GLuint buf = -1;
 		glCreateBuffers(1, &buf);
 		if (-1 == buf) return false;
@@ -22,6 +22,7 @@ namespace Clb184 {
 
 	// Same as above, but creates multiple buffers
 	bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, int cnt) {
+		LOG_INFO("Creating Buffers");
 		assert(nullptr != descriptors);
 		assert(nullptr != buffer_ids);
 
