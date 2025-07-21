@@ -231,8 +231,11 @@ int main() {
 	GLFWwindow* win = glfwCreateWindow(1280, 720, "OpenGL 4.6", nullptr, nullptr);
 	if (nullptr == win) return -1;
 	glfwMakeContextCurrent(win);
-
-	if (GLEW_OK != glewInit()) return -1;
+#ifdef WIN32
+	if (GLEW_OK != glewInit()) LOG_ERROR("Failed initializing GLEW"); return -1;
+#elif defined linux
+	glewInit();
+#endif
 
 	glEnable(GL_MULTISAMPLE);
 	glDisable(GL_CULL_FACE);
@@ -249,12 +252,12 @@ int main() {
 	GLuint vrt, frg, prg;
 	Clb184::LoadShaderFromFile("Transform3D.vert", &vrt, GL_VERTEX_SHADER);
 	Clb184::LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
-	if (false == Clb184::CreateProgram(vrt, frg, &prg)) return -1;
+	if (false == Clb184::CreateProgram(vrt, frg, &prg)) LOG_ERROR("Failed creating 3D shader"); return -1;
 
 	GLuint vrt2, frg2, prg2;
 	Clb184::LoadShaderFromFile("T&L2D.vert", &vrt2, GL_VERTEX_SHADER);
 	Clb184::LoadShaderFromFile("T&L2D.frag", &frg2, GL_FRAGMENT_SHADER);
-	if (false == Clb184::CreateProgram(vrt2, frg2, &prg2)) return -1;
+	if (false == Clb184::CreateProgram(vrt2, frg2, &prg2)) LOG_ERROR("Failed creating 2D shader"); return -1;
 
 
 	GLuint tex = -1;
