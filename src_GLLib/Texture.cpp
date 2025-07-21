@@ -108,6 +108,6 @@ namespace Clb184 {
 		// Get these properties if requested
 		if (nullptr != o_width) *o_width = width;
 		if (nullptr != o_height) *o_height = height;
-
+		return true;
 	}
 }
