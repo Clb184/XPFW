@@ -98,7 +98,9 @@ namespace Clb184 {
 		CreateTexture(tex_unit, width, height, pixel_data);
 
 		// And finally, release the decoder struct and free memory
+		LOG_INFO("Releasing PNG struct");
 		png_destroy_read_struct(&png_reader, &png_info, nullptr);
+		LOG_INFO("Freeing memory");
 		free(chardata);
 		free(pixel_data);
 		free(ppRows);
