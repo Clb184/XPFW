@@ -32,7 +32,7 @@ namespace Clb184 {
 		data->offset += size;
 	}
 
-	bool LoadTextureFromFile(const char* name, GLuint* tex_unit) {
+	bool LoadTextureFromFile(const char* name, GLuint* tex_unit, int* o_width, int* o_height) {
 		LOG_INFO("Loading texture from file");
 		assert(nullptr != tex_unit);
 
@@ -102,5 +102,10 @@ namespace Clb184 {
 		free(chardata);
 		free(pixel_data);
 		free(ppRows);
+
+		// Get these properties if requested
+		if (nullptr != o_width) *o_width = width;
+		if (nullptr != o_height) *o_height = height;
+
 	}
 }
