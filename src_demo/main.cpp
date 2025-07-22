@@ -98,26 +98,8 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 
 	// Rotate using quaternions
 	__m128 rot = _mm_mul_ps(_mm_load_ps(camera_data->rot), _mm_set_ps1(0.5f)); // Load and get the half already to use it with quaternions
-	__m128 sins;// = _mm_sin_ps(rot); //Calculate sin of all axis
-	__m128 coss;// = _mm_cos_ps(rot); //Same for cos
-#ifdef WIN32
-	sins = _mm_sin_ps(rot);
-	coss = _mm_cos_ps(rot);
-#elif defined linux
-	float temp[4];
-	_mm_store_ps(temp, rot);
-	temp[0] = sinf(temp[0]);
-	temp[1] = sinf(temp[1]);
-	temp[2] = sinf(temp[2]);
-	temp[3] = sinf(temp[3]);
-	sins = _mm_load_ps(temp);
-	_mm_store_ps(temp, rot);
-	temp[0] = cosf(temp[0]);
-	temp[1] = cosf(temp[1]);
-	temp[2] = cosf(temp[2]);
-	temp[3] = cosf(temp[3]);
-	coss = _mm_load_ps(temp);
-#endif
+	__m128 sins = DirectX::XMVectorSin(rot);// = _mm_sin_ps(rot); //Calculate sin of all axis
+	__m128 coss = DirectX::XMVectorCos(rot);// = _mm_cos_ps(rot); //Same for cos
 	
 	DirectX::XMFLOAT3 rts, rtc; //Sine and cosine Obtained
 	DirectX::XMStoreFloat3(&rts, sins);
