@@ -205,7 +205,7 @@ int main() {
 	if (0 == glfwInit()) return -1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_SAMPLES, 16);
+	//glfwWindowHint(GLFW_SAMPLES, 16);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	CameraData cmdata;
@@ -219,7 +219,7 @@ int main() {
 	glewInit();
 #endif
 
-	glEnable(GL_MULTISAMPLE);
+	//glEnable(GL_MULTISAMPLE);
 	glDisable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
@@ -283,6 +283,8 @@ int main() {
 	};
 	glUseProgram(prg2);
 	GL_ERROR();
+	glUniformMatrix4fv(0, 1, GL_FALSE, identity);
+	GL_ERROR();
 
 	glUseProgram(prg);
 	GL_ERROR();
@@ -344,6 +346,7 @@ int main() {
 
 	while (!glfwWindowShouldClose(win)) {
 		delta_time = glfwGetTime();
+		printf("delta_time: %5.4f\n", delta_time);
 		glfwSetTime(0.0);
 
 		// Process events and clear screen
@@ -363,13 +366,11 @@ int main() {
 		// Draw with command buffer or other related functions
 		glEnable(GL_DEPTH_TEST);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-		glDrawElements(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+		glDrawElementsInstanced(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0, 8192);
 		GL_ERROR();
 
 		glDisable(GL_DEPTH_TEST);
 		glUseProgram(prg2);
-		glUniformMatrix4fv(0, 1, GL_FALSE, identity);
-		GL_ERROR();
 		glBindVertexArray(mvao);
 		glActiveTexture(GL_TEXTURE0);
 		glBindSampler(0, sampler);

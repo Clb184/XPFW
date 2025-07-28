@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
 file(DOWNLOAD https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip glew.zip)
-file(DOWNLOAD https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h  ${CMAKE_HOME_DIRECTORY}/include/sal.h )
 
 # Extract downloaded files
 if(EXISTS ${CMAKE_HOME_DIRECTORY}/deps/glew)
@@ -28,7 +27,7 @@ if(MSVC)
 	message("sal.h already comes with VS...")
 else()
 	message("Getting sal.h for DirectXMath")
-	execute_process(COMMAND curl -L --output ${CMAKE_HOME_DIRECTORY}/include/sal.h https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h)
+	file(DOWNLOAD https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h  ${CMAKE_HOME_DIRECTORY}/include/sal.h )
 endif()
 
 # Set some variables to disable stuff I don't want to build.
