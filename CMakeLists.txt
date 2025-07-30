@@ -52,6 +52,7 @@ add_subdirectory(deps/glfw)
 add_subdirectory(deps/zlib/)
 add_subdirectory(deps/libpng/)
 add_subdirectory(deps/miniaudio)
+add_subdirectory(deps/FreeType)
 add_subdirectory(deps/DirectXMath)
 
 add_compile_definitions(GLEW_STATIC)
