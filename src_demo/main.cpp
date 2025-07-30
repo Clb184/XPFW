@@ -244,10 +244,10 @@ int main() {
 
 	GLuint tex = -1;
 	Clb184::TLVertex2D mvert[4] = {
-		{0.0f, -1.0f, 1.0f, 0.0f, 0xffffffff},
-		{0.0f, 0.0f, 1.0f, 1.0f, 0xffffffff},
-		{-1.0f, -1.0f, 0.0f, 0.0f, 0xffffffff},
-		{-1.0f, 0.0f, 0.0f, 1.0f, 0xffffffff},
+		{640.0f, 0.0f, 1.0f, 0.0f, 0xffffffff},
+		{640.0f, 360.0f, 1.0f, 1.0f, 0xffffffff},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff},
+		{0.0f, 360.0f, 0.0f, 1.0f, 0xffffffff},
 	};
 	int mw, mh;
 	Clb184::LoadTextureFromFile("mikoto.png", &tex, &mw, &mh);
@@ -281,9 +281,11 @@ int main() {
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
+	DirectX::XMMATRIX prj = DirectX::XMMatrixOrthographicOffCenterLH(0.0, 1280.0, 720.0f, 0.0f, 1.0f, -1.0f);
+
 	glUseProgram(prg2);
 	GL_ERROR();
-	glUniformMatrix4fv(0, 1, GL_FALSE, identity);
+	glUniformMatrix4fv(0, 1, GL_FALSE, (float*)&prj);
 	GL_ERROR();
 
 	glUseProgram(prg);
@@ -366,7 +368,7 @@ int main() {
 		// Draw with command buffer or other related functions
 		glEnable(GL_DEPTH_TEST);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-		glDrawElementsInstanced(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0, 8192);
+		glDrawElements(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
 		GL_ERROR();
 
 		glDisable(GL_DEPTH_TEST);
