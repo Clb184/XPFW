@@ -94,7 +94,7 @@ namespace Clb184 {
 		// Same for row pointers and set them
 		char** ppRows = (char**)malloc(sizeof(char*) * width);
 		for (int i = 0; i < height; i++) {
-			ppRows[i] = &pixel_data[channels * width * (height - 1 - i)];
+			ppRows[i] = &pixel_data[channels * width * (i)];
 		}
 		png_set_rows(png_reader, png_info, (png_bytepp)ppRows);
 
