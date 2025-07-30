@@ -13,3 +13,6 @@
 [submodule "deps/DirectXMath"]
 	path = deps/DirectXMath
 	url = https://github.com/microsoft/DirectXMath
+[submodule "deps/FreeType"]
+	path = deps/FreeType
+	url = https://gitlab.freedesktop.org/freetype/freetype.git
