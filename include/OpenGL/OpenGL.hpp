@@ -7,5 +7,6 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "Sampler.hpp"
+#include "Font.hpp"
 
 #endif
