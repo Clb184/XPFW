@@ -507,10 +507,7 @@ int main() {
 		glBindVertexArray(mvao);
 		//glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 		GL_ERROR();
-		DrawString(font_atlas, tvbo, tvao, "Hello World!, I'm doing fine, And YOU?\n"
-		"Well, I'm just trying to test if I can get away with writing whatever text I want\n"
-		"Will this RTX 3050 6GB stand this? with OpenGL 4.6\n"
-		"I should try this on my other machine with an AMD A4-6210 with Radeon R3 graphics as well", 0.0f, 0.0f);
+		DrawString(font_atlas, tvbo, tvao, "Hello World!, I'm doing fine, And YOU?\nWell, I'm just trying to test if I can get away with writing whatever text I want\nWill this RTX 3050 6GB stand this? with OpenGL 4.6\nI should try this on my other machine with an AMD A4-6210 with Radeon R3 graphics as well", 0.0f, 0.0f);
 		char bf[10] = "";
 		sprintf(bf, "%.2f", aver);
 		DrawString(font_atlas, tvbo, tvao, bf, 0.0f, 640.0f);
