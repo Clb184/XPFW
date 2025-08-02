@@ -46,6 +46,9 @@ set(ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/deps/zlib/zs${CMAKE_DEBUG_POSTFIX}${CMAKE_
 endif()
 set(ZLIB_INCLUDE_DIR "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
 set(ZLIB_ROOT "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
+set(FT_DISABLE_HARFBUZZ ON)
+set(FT_REQUIRE_HARFBUZZ OFF)
+set(FT_DYNAMIC_HARFBUZZ OFF)
 
 # Add necessary GLFW, ZLib and LibPNG
 add_subdirectory(deps/glfw)

@@ -22,6 +22,7 @@ namespace Clb184 {
 
 	// Size is in pixels... But needs some adjustments...
 	bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) {
+		LOG_INFO("Creating Font Atlas with size");
 		assert(nullptr != font);
 		assert(nullptr != font_desc);
 
