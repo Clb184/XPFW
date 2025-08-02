@@ -15,6 +15,8 @@
 #endif
 #include <DirectXMath.h>
 #include <miniaudio.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 struct CameraMatrix {
 	float camera[16] = {
@@ -152,6 +154,16 @@ void CreateSoundBuffer(ma_decoder* decoder, ma_uint64 frames, int channel, ma_in
 	return;
 }
 
+struct glyph_info_t {
+	float x1, x2, y1, y2; // Pos in UV
+	float t, b, l, r;
+	float adv;
+};
+
+static glyph_info_t glyphs[256];
+
+void DrawString(GLuint texture, GLuint vbuffer, GLuint varray, const char* text, float x, float y);
+
 int main() {
 	/*
 	// Just a quick test on miniaudio, nothing fancy
@@ -219,10 +231,113 @@ int main() {
 	glewInit();
 #endif
 
+	FT_Library library;
+	FT_Error err;
+	FT_Face face;
+
+	// Initialize FreeType
+	err = FT_Init_FreeType(&library);
+	if (FT_Err_Ok != err) return -1;
+
+	// Load face
+	FT_New_Face(library, "PermanentMarker-Regular.ttf", 0, &face);
+	if (FT_Err_Ok != err) return -1;
+
+	// Get face data
+	err = FT_Set_Char_Size(face, 32 << 6, 32 << 6, 64, 64);
+	if (FT_Err_Ok != err) return -1;
+
+	GLuint font_atlas;
+	glCreateTextures(GL_TEXTURE_2D, 1, &font_atlas);
+	int x = 0, y = 0;
+	constexpr float div_512 = 1.0f / 512.0f;
+	constexpr float div_64 = 1.0f / 64.0f;
+	int* expanded_pixel_data = new int[512 * 512];
+	memset(expanded_pixel_data, 0x00, sizeof(int) * 512 * 512);
+	// Get faces and map?
+	for (char c = ' '; c < 127; c++) {
+		int idx = FT_Get_Char_Index(face, c); // Get char index, like name says
+
+		// Load a glyph
+		err = FT_Load_Glyph(face, idx, FT_LOAD_DEFAULT);
+		if (FT_Err_Ok != err) {	printf("Error loading %c glyph\n", c); continue; }
+
+		// Render a glyph
+		err = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+		if (FT_Err_Ok != err) {	printf("Error rendering %c glyph\n", c); continue; }
+		int w = face->glyph->bitmap.width, h = face->glyph->bitmap.rows;
+
+		glyphs[c].x1 = x * div_512;
+		glyphs[c].x2 = (x + w) * div_512;
+		glyphs[c].y1 = y * div_512;
+		glyphs[c].y2 = (y + h) * div_512;
+		auto metric = face->glyph->metrics;
+
+		const float y_adjust_top = (metric.horiBearingY) * div_64;
+		const float bearing_width = (metric.width + metric.horiBearingX) * div_64;
+		const float bearing_x = (metric.horiBearingX) * div_64;
+		const float height = (metric.height) * div_64;
+
+		glyphs[c].adv = metric.horiAdvance * div_64;
+
+		glyphs[c].t = -y_adjust_top;
+		glyphs[c].b = -y_adjust_top + height;
+		glyphs[c].l = bearing_x;
+		glyphs[c].r = bearing_width;
+
+		char* pGlyphPixels = (char*)face->glyph->bitmap.buffer;
+		h = (h > 32) ? 32 : h;
+		for (int j = h - 1; j >= 0; j--) {
+			for (int i = 0; i < w; i++) {
+				int nm = pGlyphPixels[j * w + i];
+				expanded_pixel_data[512 * (j + y) + x + i] = (nm << 24) | (nm << 16) | (nm << 8) | nm;
+			}
+			//memcpy(&pPixel[256 * (j + y) + x], &pGlyphPixels[j * w], w);
+		}
+		x += 32;
+		if (x >= 512) {	x = 0;	y += 32; }
+		if (y >= 512) {	break; }
+	}
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glBindTexture(GL_TEXTURE_2D, font_atlas);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, expanded_pixel_data);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
+
+
+	// Render buffer test
+	// Textures on OpenGL are flipped...
+	// Can't do much about it, but that's how it works
+	GLuint framebuff, render_tex;
+	glCreateTextures(GL_TEXTURE_2D, 1, &render_tex);
+	glBindTexture(GL_TEXTURE_2D, render_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1280, 720, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glCreateFramebuffers(1, &framebuff);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuff);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_tex, 0);
+	if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
+		printf("Framebuffer incomplete\n");
+		return -1;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	Clb184::TLVertex2D fvert[4] = {
+		{1280.0f, 0.0f, 1.0f, 1.0f, 0xffffffff},
+		{1280.0f, 720.0f, 1.0f, 0.0f, 0xffffffff},
+		{0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff},
+		{0.0f, 720.0f, 0.0f, 0.0f, 0xffffffff},
+	};
+	GLuint fvbo, fvao;
+	Clb184::CreateTL2DVertexBuffer(4, fvert, GL_STATIC_DRAW, &fvbo, &fvao);
+
+	// Configuration of scene
 	//glEnable(GL_MULTISAMPLE);
 	glDisable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
+	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthRange(-1.0f, 1.0f);
@@ -244,15 +359,18 @@ int main() {
 
 	GLuint tex = -1;
 	Clb184::TLVertex2D mvert[4] = {
-		{640.0f, 0.0f, 1.0f, 0.0f, 0xffffffff},
-		{640.0f, 360.0f, 1.0f, 1.0f, 0xffffffff},
+		{512.0f, 0.0f, 1.0f, 0.0f, 0xffffffff},
+		{512.0f, 512.0f, 1.0f, 1.0f, 0xffffffff},
 		{0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff},
-		{0.0f, 360.0f, 0.0f, 1.0f, 0xffffffff},
+		{0.0f, 512.0f, 0.0f, 1.0f, 0xffffffff},
 	};
 	int mw, mh;
 	Clb184::LoadTextureFromFile("mikoto.png", &tex, &mw, &mh);
 	GLuint mvbo, mvao;
 	Clb184::CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &mvbo, &mvao);
+
+	GLuint tvbo, tvao;
+	Clb184::CreateTL2DVertexBuffer(4, nullptr, GL_DYNAMIC_DRAW, &tvbo, &tvao);
 
 	Clb184::TLVertex3D verts[] = {
 		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },     // 0
@@ -338,17 +456,18 @@ int main() {
 	Clb184::BindConstantBuffer(cbs[1], 1);
 	Clb184::BindConstantBuffer(cbs[2], 2);
 
-	glfwSwapInterval(1); // Actually vsync
+	glfwSwapInterval(0); // Actually vsync
 	double delta_time = 0.0;
 
 	GLuint sampler;
 	Clb184::CreateSampler(&sampler);
 	Clb184::SetSamplerTextureMode(sampler, GL_NEAREST);
 	Clb184::SetSamplerWrapMode(sampler, GL_REPEAT, GL_REPEAT);
-
+	glBindSampler(0, sampler);
 	while (!glfwWindowShouldClose(win)) {
 		delta_time = glfwGetTime();
-		printf("delta_time: %5.4f\n", delta_time);
+		const float aver = 1.0f / delta_time;
+		printf("delta_time: %5.4f\n", aver);
 		glfwSetTime(0.0);
 
 		// Process events and clear screen
@@ -368,24 +487,86 @@ int main() {
 		// Draw with command buffer or other related functions
 		glEnable(GL_DEPTH_TEST);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDrawElements(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
 		GL_ERROR();
 
+		// Draw 2D
 		glDisable(GL_DEPTH_TEST);
-		glUseProgram(prg2);
-		glBindVertexArray(mvao);
 		glActiveTexture(GL_TEXTURE0);
-		glBindSampler(0, sampler);
-		glBindTexture(GL_TEXTURE_2D, tex);
+		glUseProgram(prg2);
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer_cmd);
 		GL_ERROR();
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
+		// Draw RenderTex
+		glBindTexture(GL_TEXTURE_2D, render_tex);
+		glBindVertexArray(fvao);
+		//glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 		GL_ERROR();
-
+		// Draw font atlas
+		glBindTexture(GL_TEXTURE_2D, font_atlas);
+		glBindVertexArray(mvao);
+		//glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
+		GL_ERROR();
+		DrawString(font_atlas, tvbo, tvao, "Hello World!, I'm doing fine, And YOU?\n"
+		"Well, I'm just trying to test if I can get away with writing whatever text I want\n"
+		"Will this RTX 3050 6GB stand this? with OpenGL 4.6\n"
+		"I should try this on my other machine with an AMD A4-6210 with Radeon R3 graphics as well", 0.0f, 0.0f);
+		char bf[10] = "";
+		sprintf(bf, "%.2f", aver);
+		DrawString(font_atlas, tvbo, tvao, bf, 0.0f, 640.0f);
 		// Move the Swap Chain
 		glfwSwapBuffers(win);
 	}
 
 	//ma_device_uninit(&audio_device);
 	//ma_decoder_uninit(&decoder);
+}
+
+
+void DrawString(GLuint texture, GLuint vbuffer, GLuint varray, const char* text, float ox, float oy) {
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindVertexArray(varray);
+	int len = strlen(text);
+	float x = ox, y = oy + 32.0f;
+	constexpr float div_512 = 1.0f / 512.0f;
+	/*Clb184::TLVertex2D verts[4] = {
+		{1.0f, 0.0f, 1.0f, 0.0f, 0xffffffff},
+		{1.0f, 1.0f, 1.0f, 1.0f, 0xffffffff},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff},
+		{0.0f, 1.0f, 0.0f, 1.0f, 0xffffffff},
+	};*/
+
+	for (int i = 0; i < len; i++) {
+		if (text[i] == '\n') {
+			x = 0.0f;
+			y += 32.0f;
+			continue;
+		}
+
+		Clb184::TLVertex2D* vert = (Clb184::TLVertex2D*)glMapNamedBuffer(vbuffer, GL_WRITE_ONLY);
+		char c = text[i];
+		vert[0].x = x + glyphs[c].r;
+		vert[0].y = y + glyphs[c].t;
+		vert[0].u = glyphs[c].x2;
+		vert[0].v = glyphs[c].y1;
+
+		vert[1].x = x + glyphs[c].r;
+		vert[1].y = y + glyphs[c].b;
+		vert[1].u = glyphs[c].x2;
+		vert[1].v = glyphs[c].y2;
+
+		vert[2].x = x + glyphs[c].l;
+		vert[2].y = y + glyphs[c].t;
+		vert[2].u = glyphs[c].x1;
+		vert[2].v = glyphs[c].y1;
+
+		vert[3].x = x + glyphs[c].l;
+		vert[3].y = y + glyphs[c].b;
+		vert[3].u = glyphs[c].x1;
+		vert[3].v = glyphs[c].y2;
+
+		glUnmapNamedBuffer(vbuffer);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		x += glyphs[c].adv;
+	}
 }
