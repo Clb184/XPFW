@@ -46,6 +46,7 @@ namespace Clb184 {
 		CreateBuffer(&vbd, &vb);
 
 		GLuint va = -1;
+		glCreateVertexArrays(1, &va);
 		constexpr int TL2DAttributeCount = 3; // Pos, UV, Color
 		attribute_info_t TL2DAttributes[] = {
 			{0, 2, GL_FLOAT, GL_FALSE, (sizeof(float) * 0)},
@@ -53,13 +54,11 @@ namespace Clb184 {
 			{2, 4, GL_UNSIGNED_BYTE, GL_TRUE, (sizeof(float) * 4)}
 		};
 
-		GLuint vbuffers[TL2DAttributeCount] = { vb, vb, vb };
-		GLintptr voffsets[TL2DAttributeCount] = { 0, 0, 0 };
-		GLsizei vbstrides[TL2DAttributeCount] = { sizeof(Clb184::TLVertex2D), sizeof(Clb184::TLVertex2D), sizeof(Clb184::TLVertex2D) };
+		buffer_info_t buffinfo = { vb, 0, sizeof(Clb184::TLVertex2D)};
 
-		buffer_info_t buffinfo = { vbuffers, voffsets, vbstrides };
-
-		CreateVertexAttributes(TL2DAttributeCount, TL2DAttributes, &buffinfo, &va);
+		CreateVertexAttribute(&TL2DAttributes[0], &buffinfo, &va);
+		CreateVertexAttribute(&TL2DAttributes[1], &buffinfo, &va);
+		CreateVertexAttribute(&TL2DAttributes[2], &buffinfo, &va);
 
 		*vbuffer = vb;
 		*vattribute = va;
@@ -107,6 +106,7 @@ namespace Clb184 {
 		CreateBuffer(&vbd, &vb);
 
 		GLuint va = -1;
+		glCreateVertexArrays(1, &va);
 		constexpr int TL3DAttributeCount = 4; // Pos, UV, Color
 		attribute_info_t TL3DAttributes[] = {
 		{0, 3, GL_FLOAT, GL_FALSE,(sizeof(float) * 0)},
@@ -115,13 +115,12 @@ namespace Clb184 {
 		{3, 3, GL_FLOAT, GL_FALSE, (sizeof(float) * 6)},
 		};
 
-		GLuint vbuffers[TL3DAttributeCount] = { vb, vb, vb, vb };
-		GLintptr voffsets[TL3DAttributeCount] = { 0, 0, 0, 0 };
-		GLsizei vbstrides[TL3DAttributeCount] = { sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D), sizeof(Clb184::TLVertex3D) };
+		buffer_info_t buffinfo = { vb, 0, sizeof(Clb184::TLVertex3D) };
 
-		buffer_info_t buffinfo = { vbuffers, voffsets, vbstrides };
-
-		CreateVertexAttributes(TL3DAttributeCount, TL3DAttributes, &buffinfo, &va);
+		CreateVertexAttribute(&TL3DAttributes[0], &buffinfo, &va);
+		CreateVertexAttribute(&TL3DAttributes[1], &buffinfo, &va);
+		CreateVertexAttribute(&TL3DAttributes[2], &buffinfo, &va);
+		CreateVertexAttribute(&TL3DAttributes[3], &buffinfo, &va);
 
 		*vbuffer = vb;
 		*vattribute = va;

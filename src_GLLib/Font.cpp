@@ -110,8 +110,6 @@ namespace Clb184 {
 	void DrawString(font_t* font, float ox, float oy, const char* string) {
 		assert(nullptr != font);
 
-		glBindTexture(GL_TEXTURE_2D, font->font_atlas);
-		glBindVertexArray(font->varray);
 		int len = strlen(string);
 		const float block_advance = font->size;
 		float x = ox, y = oy + block_advance;
@@ -155,6 +153,8 @@ namespace Clb184 {
 		}
 
 		glUnmapNamedBuffer(font->vbuffer);
+		glBindTexture(GL_TEXTURE_2D, font->font_atlas);
+		glBindVertexArray(font->varray);
 		glDrawArrays(GL_TRIANGLES, 0, final_len * 6);
 	}
 }
