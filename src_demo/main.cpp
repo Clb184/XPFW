@@ -369,7 +369,7 @@ int main() {
 	Clb184::BindConstantBuffer(cbs[1], 1);
 	Clb184::BindConstantBuffer(cbs[2], 2);
 
-	glfwSwapInterval(0); // Actually vsync
+	glfwSwapInterval(1); // Actually vsync
 	double delta_time = 0.0;
 
 	GLuint sampler;
@@ -383,12 +383,12 @@ int main() {
 	Clb184::font_t* font = new Clb184::font_t;
 	Clb184::InitializeFreeType(&library);
 	Clb184::LoadFontFromFile(library, &font_desc, "PermanentMarker-Regular.ttf");
-	Clb184::CreateFontWithAtlas(font_desc, font, 48.0f);
+	Clb184::CreateFontWithAtlas(font_desc, font, 20.0f);
 
 	while (!glfwWindowShouldClose(win)) {
 		delta_time = glfwGetTime();
 		const float aver = 1.0f / delta_time;
-		printf("delta_time: %5.4f\n", aver);
+		//printf("delta_time: %5.4f\n", aver);
 		glfwSetTime(0.0);
 
 		// Process events and clear screen
@@ -427,7 +427,7 @@ int main() {
 		glBindVertexArray(mvao);
 		//glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 		GL_ERROR();
-		Clb184::DrawString(font, 0.0f, 0.0f, 
+		Clb184::DrawString(font, 0.0f, 0.0f,
 			"Hello World!, I'm doing fine, And YOU?\n"
 			"Well, I'm just trying to test if I can get away with writing whatever text I want\n"
 			"Will this RTX 3050 6GB stand this? with OpenGL 4.6\n"
