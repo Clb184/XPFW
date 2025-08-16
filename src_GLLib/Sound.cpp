@@ -1,0 +1,145 @@
+#include <MiniAudio/Sound.hpp>
+#include <stdint.h>
+#include <assert.h>
+#include "Output.hpp"
+
+namespace Clb184 {
+	bool InitializeSoundControl(sound_control_t* sound_control, int num_sound_buffers) {
+		LOG_INFO("Initializing Sound Control");
+		assert(nullptr != sound_control);
+
+		ma_device_config cfg;
+		cfg = ma_device_config_init(ma_device_type_playback);
+		cfg.playback.format = ma_format_s16;
+		cfg.playback.channels = 2;
+		cfg.sampleRate = 44100;
+		cfg.dataCallback = SoundBufferPlayback;
+		cfg.pUserData = &sound_control->sounds;
+		sound_control->device;
+
+		// Initialize device
+		if (MA_SUCCESS != ma_device_init(nullptr, &cfg, &sound_control->device)) {
+			ma_decoder_uninit(&sound_control->decoder);
+			return false;
+		}
+
+		// Allocate all sound buffers needed
+		sound_control->sounds.cnt = num_sound_buffers;
+		sound_control->sounds.sound_buffers = new sound_buffer_t[num_sound_buffers];
+		if (nullptr == sound_control->sounds.sound_buffers) return false;
+
+		// Now start sound
+		if (MA_SUCCESS != ma_device_start(&sound_control->device)) {
+			ma_device_uninit(&sound_control->device);
+			ma_decoder_uninit(&sound_control->decoder);
+			return false;
+		}
+
+		return true;
+	}
+
+	void SetSoundMasterVolume(sound_control_t* sound_control, float level) {
+		assert(nullptr != sound_control);
+		ma_device_set_master_volume(&sound_control->device, level);
+	}
+
+	bool CreateSoundBuffer(ma_decoder* decoder, sound_buffer_t* sound_buffer, int cnt, const char* filename) {
+		LOG_INFO("Creating Sound Buffer");
+		assert(nullptr != sound_buffer);
+		ma_result res;
+		ma_audio_buffer_config cfg;
+		ma_uint64 frames;
+		ma_decoder_config dec_cfg;
+
+		dec_cfg = ma_decoder_config_init(ma_format_s16, 2, 44100);
+		res = ma_decoder_init_file(filename, &dec_cfg, decoder);
+		res = ma_decoder_get_available_frames(decoder, &frames);
+		if (MA_SUCCESS != res) return false;
+
+		ma_int16* samples = new ma_int16[frames * 2 + 2];
+		ma_int16* offset = samples;
+		ma_uint64 frm = 0;
+		ma_uint64 frm_total = 0;
+
+		do {
+			ma_decoder_read_pcm_frames(decoder, offset, 4096, &frm);
+			offset += frm * 2;
+			frm_total += frm;
+		} while (frm);
+
+		cfg = ma_audio_buffer_config_init(ma_format_s16, 2, frames, samples, nullptr);
+
+		sound_buffer->cnt = cnt;
+		sound_buffer->data = samples;
+		sound_buffer->buffers = new audio_buffer_t[cnt];
+		if (nullptr == sound_buffer->buffers) return false;
+		for (int i = 0; i < cnt; i++) {
+			res = ma_audio_buffer_init(&cfg, &sound_buffer->buffers[i].buffer_info);
+		}
+	}
+
+	void DestroySoundBuffer(sound_buffer_t* sound_buffer) {
+		LOG_INFO("Destroying Sound Buffer");
+		assert(nullptr != sound_buffer);
+		assert(nullptr != sound_buffer->buffers);
+		assert(nullptr != sound_buffer->data);
+
+		sound_buffer->cnt = 0; // Zero available buffers
+		delete sound_buffer->buffers; // Delete all buffers
+		sound_buffer->buffers = nullptr;
+		delete sound_buffer->data; // Delete the PCM data as is not needed anymore
+		sound_buffer->data = nullptr;
+	}
+
+	void Play(sound_control_t* sound_control, int index) {
+		const int cnt = sound_control->sounds.sound_buffers[index].cnt;
+		audio_buffer_t* buffer = sound_control->sounds.sound_buffers[index].buffers;
+		for (int i = 0; i < cnt; i++) {
+			if (buffer[i].status == AB_PLAY) continue;
+			buffer[i].status = AB_PLAY;
+			ma_audio_buffer_seek_to_pcm_frame(&buffer[i].buffer_info, 0);
+		}
+	}
+
+	void PlayX(sound_control_t* sound_control, int index, float x) {
+
+	}
+
+	void SoundBufferPlayback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+		sound_buffer_container_t* all_buffer = (sound_buffer_container_t*)pDevice->pUserData;
+		ma_int16* buf = (ma_int16*)pOutput;
+		ma_int16 buff[4096] = { 0 };
+
+		assert(nullptr != all_buffer);
+		assert(nullptr != all_buffer->sound_buffers);
+		
+		int num_sbuffers = all_buffer->cnt;
+
+		// Go over all sound buffers
+		for (int b = 0; b < num_sbuffers; b++) {
+			const sound_buffer_t* sbuffer = &all_buffer->sound_buffers[b];
+			const int num_buffers = sbuffer->cnt;
+			assert(nullptr != sbuffer);
+
+			// Go over each sound instance
+			for (int i = 0; i < num_buffers; i++) {
+
+				// Do not play whatever is stoped or paused
+				if (sbuffer->buffers[i].status == AB_STOP) continue;
+				
+				ma_uint64 frms = ma_audio_buffer_read_pcm_frames(&sbuffer->buffers[i].buffer_info, buff, frameCount, false);
+				if (frms) {
+					// Keep volume at bay
+					for (ma_uint64 j = 0; j < frms * 2; j++) {
+						int max = buf[j] + buff[j];
+						buf[j] = (max > INT16_MAX) ? INT16_MAX : (max < INT16_MIN) ? INT16_MIN : max;
+					}
+				}
+				else {
+					// It ended? just stop it
+					sbuffer->buffers[i].status = AB_STOP;
+				}
+			}
+		}
+	}
+}

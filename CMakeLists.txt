@@ -7,11 +7,12 @@ option(BUILD_DEMO ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
-# If you don't have a copy of GLEW and are just looking over here, have this link, this is what I use: https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
+# If you don't have a copy of GLEW and are just looking over here, have this link, this is what I use:
+# https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
 
 # Extract downloaded files
 if (NOT EXISTS ${CMAKE_HOME_DIRECTORY}/deps/glew)
-	message(FATAL_ERROR "Get a copy of GLEW, sorry that I can't just add it as a submodule")
+	message(FATAL_ERROR "Get a copy of GLEW, sorry that I can't just add it as a submodule, I do this to not be dependent on Internet connection")
 endif()
 
 # sal.h for DirectXMath
