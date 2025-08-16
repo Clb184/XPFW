@@ -16,3 +16,9 @@
 [submodule "deps/FreeType"]
 	path = deps/FreeType
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
+[submodule "deps/ogg"]
+	path = deps/ogg
+	url = https://github.com/xiph/ogg
+[submodule "deps/vorbis"]
+	path = deps/vorbis
+	url = https://github.com/xiph/vorbis
