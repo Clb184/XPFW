@@ -21,7 +21,6 @@ namespace Clb184 {
 
 	struct buffer_info_t {
 		GLuint buffer = -1;
-		GLintptr offset = -1;
 		GLsizei stride = -1;
 	};
 

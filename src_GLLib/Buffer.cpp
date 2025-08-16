@@ -48,13 +48,13 @@ namespace Clb184 {
 
 		// Put attributes in its place
 		if (attribute_data->type == GL_INT || attribute_data->type == GL_UNSIGNED_INT)
-			glVertexArrayAttribIFormat(va, attribute_data->index, attribute_data->size, attribute_data->type, attribute_data->ptr);
+			glVertexArrayAttribIFormat(va, attribute_data->index, attribute_data->size, attribute_data->type, 0);
 		else
-			glVertexArrayAttribFormat(va, attribute_data->index, attribute_data->size, attribute_data->type, attribute_data->normalized, attribute_data->ptr);
+			glVertexArrayAttribFormat(va, attribute_data->index, attribute_data->size, attribute_data->type, attribute_data->normalized, 0);
 
 		// And enable the attribute
 		glEnableVertexArrayAttrib(va, attribute_data->index);
-		glVertexArrayVertexBuffer(va, attribute_data->index, buffer_data->buffer, buffer_data->offset, buffer_data->stride);
+		glVertexArrayVertexBuffer(va, attribute_data->index, buffer_data->buffer, attribute_data->ptr, buffer_data->stride);
 
 		// Is the same as the one above, but offsets are in different parts, however result is the same
 		// I'm using only DSA (Direct State Access, so I'm not going to do the following that I'll keep commented out)
