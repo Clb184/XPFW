@@ -115,7 +115,8 @@ namespace Clb184 {
 		float x = ox, y = oy + block_advance;
 
 		Clb184::TLVertex2D* vert = (Clb184::TLVertex2D*)glMapNamedBuffer(font->vbuffer, GL_WRITE_ONLY);
-		int final_len = 0;
+		const float adv_space = font->glyphs[' ' - 32].adv;
+		int ic = 0;
 		for (int i = 0; i < len; i++) {
 			char c = string[i];
 			if (c == '\n') {
@@ -123,38 +124,42 @@ namespace Clb184 {
 				y += block_advance;
 				continue;
 			}
+			else if (c == ' ') {
+				x += adv_space;
+				continue;
+			}
 
 			glyph_info_t glyph = font->glyphs[c - 32];
 
-			vert[i * 6].x = x + glyph.l;
-			vert[i * 6].y = y + glyph.t;
-			vert[i * 6].u = glyph.x1;
-			vert[i * 6].v = glyph.y1;
-			vert[i * 6 + 3] = vert[i * 6];
+			vert[ic * 6].x = x + glyph.l;
+			vert[ic * 6].y = y + glyph.t;
+			vert[ic * 6].u = glyph.x1;
+			vert[ic * 6].v = glyph.y1;
+			vert[ic * 6 + 3] = vert[ic * 6];
 
-			vert[i * 6 + 1].x = x + glyph.r;
-			vert[i * 6 + 1].y = y + glyph.t;
-			vert[i * 6 + 1].u = glyph.x2;
-			vert[i * 6 + 1].v = glyph.y1;
+			vert[ic * 6 + 1].x = x + glyph.r;
+			vert[ic * 6 + 1].y = y + glyph.t;
+			vert[ic * 6 + 1].u = glyph.x2;
+			vert[ic * 6 + 1].v = glyph.y1;
 
-			vert[i * 6 + 2].x = x + glyph.r;
-			vert[i * 6 + 2].y = y + glyph.b;
-			vert[i * 6 + 2].u = glyph.x2;
-			vert[i * 6 + 2].v = glyph.y2;
-			vert[i * 6 + 4] = vert[i * 6 + 2];
+			vert[ic * 6 + 2].x = x + glyph.r;
+			vert[ic * 6 + 2].y = y + glyph.b;
+			vert[ic * 6 + 2].u = glyph.x2;
+			vert[ic * 6 + 2].v = glyph.y2;
+			vert[ic * 6 + 4] = vert[ic * 6 + 2];
 
-			vert[i * 6 + 5].x = x + glyph.l;
-			vert[i * 6 + 5].y = y + glyph.b;
-			vert[i * 6 + 5].u = glyph.x1;
-			vert[i * 6 + 5].v = glyph.y2;
+			vert[ic * 6 + 5].x = x + glyph.l;
+			vert[ic * 6 + 5].y = y + glyph.b;
+			vert[ic * 6 + 5].u = glyph.x1;
+			vert[ic * 6 + 5].v = glyph.y2;
 
 			x += glyph.adv;
-			final_len++;
+			ic++;
 		}
 
 		glUnmapNamedBuffer(font->vbuffer);
 		glBindTexture(GL_TEXTURE_2D, font->font_atlas);
 		glBindVertexArray(font->varray);
-		glDrawArrays(GL_TRIANGLES, 0, final_len * 6);
+		glDrawArrays(GL_TRIANGLES, 0, ic * 6);
 	}
 }
