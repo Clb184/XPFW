@@ -53,6 +53,7 @@ namespace Clb184 {
 
 		dec_cfg = ma_decoder_config_init(ma_format_s16, 2, 44100);
 		res = ma_decoder_init_file(filename, &dec_cfg, decoder);
+		if (MA_SUCCESS != res) return false;
 		res = ma_decoder_get_available_frames(decoder, &frames);
 		if (MA_SUCCESS != res) return false;
 
@@ -97,12 +98,24 @@ namespace Clb184 {
 		for (int i = 0; i < cnt; i++) {
 			if (buffer[i].status == AB_PLAY) continue;
 			buffer[i].status = AB_PLAY;
+			buffer[i].place = 0.0f;
 			ma_audio_buffer_seek_to_pcm_frame(&buffer[i].buffer_info, 0);
+			break;
 		}
 	}
 
 	void PlayX(sound_control_t* sound_control, int index, float x) {
-
+		const int cnt = sound_control->sounds.sound_buffers[index].cnt;
+		constexpr float div_place = 1.0f / 300.0f;
+		audio_buffer_t* buffer = sound_control->sounds.sound_buffers[index].buffers;
+		for (int i = 0; i < cnt; i++) {
+			if (buffer[i].status == AB_PLAY) continue;
+			buffer[i].status = AB_PLAY;
+			const float place = x * div_place;
+			buffer[i].place = (1.0f > place) ? 1.0f : (place < 0.0f) ? 0.0f : place;
+			ma_audio_buffer_seek_to_pcm_frame(&buffer[i].buffer_info, 0);
+			break;
+		}
 	}
 
 	void SoundBufferPlayback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
@@ -123,21 +136,24 @@ namespace Clb184 {
 
 			// Go over each sound instance
 			for (int i = 0; i < num_buffers; i++) {
-
+				audio_buffer_t* abuffer = &sbuffer->buffers[i];
 				// Do not play whatever is stoped or paused
-				if (sbuffer->buffers[i].status == AB_STOP) continue;
+				if (abuffer->status == AB_STOP) continue;
 				
-				ma_uint64 frms = ma_audio_buffer_read_pcm_frames(&sbuffer->buffers[i].buffer_info, buff, frameCount, false);
+				ma_uint64 frms = ma_audio_buffer_read_pcm_frames(&abuffer->buffer_info, buff, frameCount, false);
 				if (frms) {
 					// Keep volume at bay
-					for (ma_uint64 j = 0; j < frms * 2; j++) {
-						int max = buf[j] + buff[j];
-						buf[j] = (max > INT16_MAX) ? INT16_MAX : (max < INT16_MIN) ? INT16_MIN : max;
+					for (ma_uint64 j = 0; j < frms; j++) {
+						const int maxr = (buf[j * 2] + ((buff[j * 2]) >> 1) * (0.5 - abuffer->place));
+						const int maxl = (buf[j * 2 + 1] + ((buff[j * 2 + 1]) >> 1) * (0.5 + abuffer->place));
+
+						buf[j * 2] = (maxr > INT16_MAX) ? INT16_MAX : (maxr < INT16_MIN) ? INT16_MIN : maxr;
+						buf[j * 2 + 1] = (maxl > INT16_MAX) ? INT16_MAX : (maxl < INT16_MIN) ? INT16_MIN : maxl;
 					}
 				}
 				else {
 					// It ended? just stop it
-					sbuffer->buffers[i].status = AB_STOP;
+					abuffer->status = AB_STOP;
 				}
 			}
 		}
