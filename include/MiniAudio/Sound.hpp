@@ -10,6 +10,7 @@ namespace Clb184 {
 
 	struct audio_buffer_t {
 		int status = false; // 0 -> STOP 1 -> PLAY
+		float place = 0.0f;
 		ma_audio_buffer buffer_info;
 	};
 
