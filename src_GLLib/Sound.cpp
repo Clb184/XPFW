@@ -38,6 +38,13 @@ namespace Clb184 {
 		return true;
 	}
 
+	bool DestroySoundControl(sound_control_t* sound_control) {
+		LOG_INFO("Destroying Sound Control");
+		assert(nullptr != sound_control);
+		ma_decoder_uninit(&sound_control->decoder);
+		ma_device_uninit(&sound_control->device);
+	}
+
 	void SetSoundMasterVolume(sound_control_t* sound_control, float level) {
 		assert(nullptr != sound_control);
 		ma_device_set_master_volume(&sound_control->device, level);
