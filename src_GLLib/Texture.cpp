@@ -116,4 +116,13 @@ namespace Clb184 {
 		if (nullptr != o_height) *o_height = height;
 		return true;
 	}
+
+	bool CreateEmptyTexture(GLuint* tex_unit,int color) {
+		assert(nullptr != tex_unit);
+		int* pixels = (int*)malloc(256 * 256 * 4); // Color is 32 bits
+		memset(pixels, color, 256 * 256 * 4);
+		CreateTexture(tex_unit, 256, 256, (char*)pixels);
+		free(pixels);
+		return true;
+	}
 }
