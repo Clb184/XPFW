@@ -168,53 +168,6 @@ int main() {
 	Clb184::CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.wav");
 	Clb184::CreateSoundBuffer(snd_control, 2, 4, "Typing.wav");
 	//Clb184::PlaySndX(snd_control, 0, 200.0f);
-	/*
-	// Just a quick test on miniaudio, nothing fancy
-	ma_result res;
-	ma_decoder decoder;
-	ma_device_config audio_device_cfg;
-	ma_device audio_device;
-
-
-	ma_audio_buffer_config audio_buffer_cfg;
-
-	res = ma_decoder_init_file("kog_09.wav", nullptr, &decoder);
-	ma_uint64 frms;
-	ma_decoder_get_available_frames(&decoder, &frms);
-	if (MA_SUCCESS != res) return -1;
-
-	audio_buffer_t* pbuffers = new audio_buffer_t;
-
-	audio_device_cfg = ma_device_config_init(ma_device_type_playback);
-	audio_device_cfg.playback.format = ma_format_s16;
-	audio_device_cfg.playback.channels = 2;
-	audio_device_cfg.sampleRate = 44100;
-	audio_device_cfg.dataCallback = DataPlayback;
-	audio_device_cfg.pUserData = pbuffers;
-
-	ma_int16* pdata = nullptr;
-	CreateSoundBuffer(&decoder, frms, 2, &pdata);
-	audio_buffer_cfg = ma_audio_buffer_config_init(ma_format_s16, 2, frms, pdata, nullptr);
-
-
-	if (MA_SUCCESS != ma_device_init(nullptr, &audio_device_cfg, &audio_device)) {
-		ma_decoder_uninit(&decoder);
-		return -1;
-	}
-
-	if (MA_SUCCESS != ma_device_start(&audio_device)) {
-		ma_device_uninit(&audio_device);
-		ma_decoder_uninit(&decoder);
-		return -1;
-	}
-
-	for (int i = 0; i < 0; i++) {
-		ma_audio_buffer_init(&audio_buffer_cfg, &pbuffers->buffers[i]);
-		pbuffers->cnt++;
-		_sleep(200);
-	}
-
-	ma_device_set_master_volume(&audio_device, 0.5f);*/
 
 	// Back with OpenGL...
 	if (0 == glfwInit()) return -1;
