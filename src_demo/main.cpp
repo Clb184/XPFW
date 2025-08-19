@@ -406,6 +406,5 @@ int main() {
 		glfwSwapBuffers(win);
 	}
 
-	//ma_device_uninit(&audio_device);
-	//ma_decoder_uninit(&decoder);
+	Clb184::DestroySoundControl(snd_control);
 }

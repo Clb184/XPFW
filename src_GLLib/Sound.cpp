@@ -38,7 +38,7 @@ namespace Clb184 {
 		return true;
 	}
 
-	bool DestroySoundControl(sound_control_t* sound_control) {
+	void DestroySoundControl(sound_control_t* sound_control) {
 		LOG_INFO("Destroying Sound Control");
 		assert(nullptr != sound_control);
 		ma_decoder_uninit(&sound_control->decoder);

@@ -33,7 +33,7 @@ namespace Clb184 {
 
 	// Initialize decoder and sound device
 	bool InitializeSoundControl(sound_control_t* sound_control, int num_sound_buffers);
-	bool DestroySoundControl(sound_control_t* sound_control);
+	void DestroySoundControl(sound_control_t* sound_control);
 
 	// Set master volume
 	void SetSoundMasterVolume(sound_control_t* sound_control, float level);
