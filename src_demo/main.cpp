@@ -36,10 +36,15 @@ struct CameraData {
 	CameraMatrix mt;
 };
 
+#include "MiniAudio/Sound.hpp"
+
+Clb184::sound_control_t* snd_control = new Clb184::sound_control_t;
+
 void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	CameraData* data = (CameraData*)glfwGetWindowUserPointer(window);
 	int mov_bits = data->mov_bits;
 	if (action == GLFW_PRESS) {
+		//Clb184::PlaySnd(snd_control, 2);
 		switch (key) {
 			case GLFW_KEY_W: mov_bits |= 1; break;
 			case GLFW_KEY_S: mov_bits |= 2; break;
@@ -47,6 +52,8 @@ void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 			case GLFW_KEY_D: mov_bits |= 8; break;
 			case GLFW_KEY_SPACE: mov_bits |= 16; break;
 			case GLFW_KEY_LEFT_CONTROL: mov_bits |= 32; break;
+
+			case GLFW_KEY_Z: Clb184::PlaySndX(snd_control, 1, 400.0f); break;
 
 			case GLFW_KEY_LEFT: mov_bits |= 256; break;
 			case GLFW_KEY_RIGHT: mov_bits |= 512; break;
@@ -154,7 +161,13 @@ void CreateSoundBuffer(ma_decoder* decoder, ma_uint64 frames, int channel, ma_in
 	return;
 }
 
+
 int main() {
+	Clb184::InitializeSoundControl(snd_control, 3);
+	Clb184::CreateSoundBuffer(snd_control, 0, 1, "exboss_2.wav");
+	Clb184::CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.wav");
+	Clb184::CreateSoundBuffer(snd_control, 2, 4, "Typing.wav");
+	//Clb184::PlaySndX(snd_control, 0, 200.0f);
 	/*
 	// Just a quick test on miniaudio, nothing fancy
 	ma_result res;

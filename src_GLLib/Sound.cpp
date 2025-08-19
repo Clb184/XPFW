@@ -43,18 +43,23 @@ namespace Clb184 {
 		ma_device_set_master_volume(&sound_control->device, level);
 	}
 
-	bool CreateSoundBuffer(ma_decoder* decoder, sound_buffer_t* sound_buffer, int cnt, const char* filename) {
-		LOG_INFO("Creating Sound Buffer");
-		assert(nullptr != sound_buffer);
+	bool CreateSoundBuffer(sound_control_t* sound_control, int index, int cnt, const char* filename) {
+		char buf[256] = "";
+		sprintf(buf, "Creating Sound Buffer (%d) for \"%s\" x%d", index, filename, cnt);
+		LOG_INFO(buf);
+		assert(nullptr != sound_control);
+		assert(sound_control->sounds.cnt > index);
+
 		ma_result res;
 		ma_audio_buffer_config cfg;
 		ma_uint64 frames;
 		ma_decoder_config dec_cfg;
 
+		// Init data
 		dec_cfg = ma_decoder_config_init(ma_format_s16, 2, 44100);
-		res = ma_decoder_init_file(filename, &dec_cfg, decoder);
+		res = ma_decoder_init_file(filename, &dec_cfg, &sound_control->decoder);
 		if (MA_SUCCESS != res) return false;
-		res = ma_decoder_get_available_frames(decoder, &frames);
+		res = ma_decoder_get_available_frames(&sound_control->decoder, &frames);
 		if (MA_SUCCESS != res) return false;
 
 		ma_int16* samples = new ma_int16[frames * 2 + 2];
@@ -62,13 +67,16 @@ namespace Clb184 {
 		ma_uint64 frm = 0;
 		ma_uint64 frm_total = 0;
 
+		// Completely read all data
 		do {
-			ma_decoder_read_pcm_frames(decoder, offset, 4096, &frm);
+			ma_decoder_read_pcm_frames(&sound_control->decoder, offset, 4096, &frm);
 			offset += frm * 2;
 			frm_total += frm;
 		} while (frm);
 
 		cfg = ma_audio_buffer_config_init(ma_format_s16, 2, frames, samples, nullptr);
+
+		sound_buffer_t* sound_buffer = &sound_control->sounds.sound_buffers[index];
 
 		sound_buffer->cnt = cnt;
 		sound_buffer->data = samples;
@@ -79,11 +87,15 @@ namespace Clb184 {
 		}
 	}
 
-	void DestroySoundBuffer(sound_buffer_t* sound_buffer) {
+	void DestroySoundBuffer(sound_control_t* sound_control, int index) {
 		LOG_INFO("Destroying Sound Buffer");
-		assert(nullptr != sound_buffer);
-		assert(nullptr != sound_buffer->buffers);
-		assert(nullptr != sound_buffer->data);
+		assert(nullptr != sound_control);
+		assert(nullptr != sound_control->sounds.sound_buffers);
+		assert(sound_control->sounds.cnt > index);
+		assert(nullptr != sound_control->sounds.sound_buffers[index].data);
+		
+		// Proceeed with the sound buffer
+		sound_buffer_t* sound_buffer = &sound_control->sounds.sound_buffers[index];
 
 		sound_buffer->cnt = 0; // Zero available buffers
 		delete sound_buffer->buffers; // Delete all buffers
@@ -92,7 +104,7 @@ namespace Clb184 {
 		sound_buffer->data = nullptr;
 	}
 
-	void Play(sound_control_t* sound_control, int index) {
+	void PlaySnd(sound_control_t* sound_control, int index) {
 		const int cnt = sound_control->sounds.sound_buffers[index].cnt;
 		audio_buffer_t* buffer = sound_control->sounds.sound_buffers[index].buffers;
 		for (int i = 0; i < cnt; i++) {
@@ -104,7 +116,7 @@ namespace Clb184 {
 		}
 	}
 
-	void PlayX(sound_control_t* sound_control, int index, float x) {
+	void PlaySndX(sound_control_t* sound_control, int index, float x) {
 		const int cnt = sound_control->sounds.sound_buffers[index].cnt;
 		constexpr float div_place = 1.0f / 300.0f;
 		audio_buffer_t* buffer = sound_control->sounds.sound_buffers[index].buffers;

@@ -38,12 +38,12 @@ namespace Clb184 {
 	void SetSoundMasterVolume(sound_control_t* sound_control, float level);
 
 	// Create n buffers to play sound
-	bool CreateSoundBuffer(ma_decoder* decoder, sound_buffer_t* sound_buffer, int cnt, const char* filename);
-	void DestroySoundBuffer(sound_buffer_t* sound_buffer);
+	bool CreateSoundBuffer(sound_control_t* sound_control, int index, int cnt, const char* filename);
+	void DestroySoundBuffer(sound_control_t* sound_control, int index);
 
 	// Play in normal mode or using x position as reference
-	void Play(sound_control_t* sound_control, int index);
-	void PlayX(sound_control_t* sound_control, int index, float x);
+	void PlaySnd(sound_control_t* sound_control, int index);
+	void PlaySndX(sound_control_t* sound_control, int index, float x);
 
 	// Move all sounds in sound buffers
 	void SoundBufferPlayback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
