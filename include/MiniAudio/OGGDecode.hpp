@@ -24,10 +24,10 @@ namespace Clb184 {
 		void* vorbis_file = nullptr;
 	};
 
-	bool LoadVorbisFile(const char* filename, vorbis_data_t* ogg_data);
-	void ReleaseVorbisData(vorbis_data_t* ogg_data);
+	bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data);
+	void ReleaseVorbisData(vorbis_data_t* vorbis_data);
 
-	bool BeginVorbisStream(vorbis_stream_t* vorbis_stream);
+	bool BeginVorbisStream(const char* filename, vorbis_stream_t* vorbis_stream);
 	void EndVorbisStream(vorbis_stream_t* vorbis_stream);
 
 	void ReadVorbisChunk(vorbis_stream_t* vorbis_stream, int16_t* samples, int count, int channels);
