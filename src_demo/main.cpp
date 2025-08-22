@@ -44,7 +44,6 @@ void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 	CameraData* data = (CameraData*)glfwGetWindowUserPointer(window);
 	int mov_bits = data->mov_bits;
 	if (action == GLFW_PRESS) {
-		//Clb184::PlaySnd(snd_control, 2);
 		switch (key) {
 			case GLFW_KEY_W: mov_bits |= 1; break;
 			case GLFW_KEY_S: mov_bits |= 2; break;
@@ -53,7 +52,8 @@ void CameraKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
 			case GLFW_KEY_SPACE: mov_bits |= 16; break;
 			case GLFW_KEY_LEFT_CONTROL: mov_bits |= 32; break;
 
-			case GLFW_KEY_Z: Clb184::PlaySndX(snd_control, 1, 400.0f); break;
+			case GLFW_KEY_Z: Clb184::PlaySndX(snd_control, 1, 0.0f); break;
+			case GLFW_KEY_BACKSPACE: Clb184::PlaySnd(snd_control, 0); break;
 
 			case GLFW_KEY_LEFT: mov_bits |= 256; break;
 			case GLFW_KEY_RIGHT: mov_bits |= 512; break;
@@ -164,9 +164,9 @@ void CreateSoundBuffer(ma_decoder* decoder, ma_uint64 frames, int channel, ma_in
 
 int main() {
 	Clb184::InitializeSoundControl(snd_control, 3);
-	Clb184::CreateSoundBuffer(snd_control, 0, 1, "exboss_2.wav");
-	Clb184::CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.wav");
-	Clb184::CreateSoundBuffer(snd_control, 2, 4, "Typing.wav");
+	// We only play Vorbis files now
+	Clb184::CreateSoundBuffer(snd_control, 0, 1, "exboss_2.ogg");
+	Clb184::CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.ogg");
 	//Clb184::PlaySndX(snd_control, 0, 200.0f);
 
 	// Back with OpenGL...
@@ -184,7 +184,7 @@ int main() {
 #ifdef WIN32
 	if (GLEW_OK != glewInit()) { LOG_ERROR("Failed initializing GLEW"); return -1; }
 #elif defined linux
-	glewInit();
+	glewInit();z
 #endif
 
 	// Render buffer test
@@ -241,13 +241,13 @@ int main() {
 
 	GLuint tex = -1;
 	Clb184::TLVertex2D mvert[4] = {
-		{512.0f, 0.0f, 1.0f, 0.0f, 0xffffffff},
-		{512.0f, 512.0f, 1.0f, 1.0f, 0xffffffff},
-		{0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff},
-		{0.0f, 512.0f, 0.0f, 1.0f, 0xffffffff},
+		{1280.0f, 720.0f - 90.0f, 1.0f, 0.0f, 0xffffffff},
+		{1280.0f, 720.0f, 1.0f, 1.0f, 0xffffffff},
+		{1280.0f - 160.0f, 720.0f - 90.0f, 0.0f, 0.0f, 0xffffffff},
+		{1280.0f - 160.0f, 720.0f, 0.0f, 1.0f, 0xffffffff},
 	};
 	int mw, mh;
-	Clb184::LoadTextureFromFile("mikoto.png", &tex, &mw, &mh);
+	Clb184::LoadTextureFromFile("misaka.png", &tex, &mw, &mh);
 	GLuint mvbo, mvao;
 	Clb184::CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &mvbo, &mvao);
 
@@ -391,7 +391,8 @@ int main() {
 		GL_ERROR();
 		// Draw font atlas
 		glBindVertexArray(mvao);
-		//glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 		GL_ERROR();
 		Clb184::DrawString(font, 0.0f, 0.0f,
 			"Hello World!, I'm doing fine, And YOU?\n"

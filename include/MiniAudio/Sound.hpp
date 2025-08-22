@@ -15,6 +15,7 @@ namespace Clb184 {
 	};
 
 	struct sound_buffer_t {
+		int channels = 0;
 		ma_int16* data; // PCM data
 		int cnt = 0; // How many buffers
 		audio_buffer_t* buffers = nullptr;

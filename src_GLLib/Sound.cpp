@@ -1,6 +1,7 @@
 #include <MiniAudio/Sound.hpp>
 #include <stdint.h>
 #include <assert.h>
+#include "MiniAudio/OGGDecode.hpp"
 #include "Output.hpp"
 
 namespace Clb184 {
@@ -59,36 +60,21 @@ namespace Clb184 {
 
 		ma_result res;
 		ma_audio_buffer_config cfg;
-		ma_uint64 frames;
-		ma_decoder_config dec_cfg;
 
-		// Init data
-		dec_cfg = ma_decoder_config_init(ma_format_s16, 2, 44100);
-		res = ma_decoder_init_file(filename, &dec_cfg, &sound_control->decoder);
-		if (MA_SUCCESS != res) return false;
-		res = ma_decoder_get_available_frames(&sound_control->decoder, &frames);
-		if (MA_SUCCESS != res) return false;
-
-		ma_int16* samples = new ma_int16[frames * 2 + 2];
-		ma_int16* offset = samples;
-		ma_uint64 frm = 0;
-		ma_uint64 frm_total = 0;
-
-		// Completely read all data
-		do {
-			ma_decoder_read_pcm_frames(&sound_control->decoder, offset, 4096, &frm);
-			offset += frm * 2;
-			frm_total += frm;
-		} while (frm);
-
-		cfg = ma_audio_buffer_config_init(ma_format_s16, 2, frames, samples, nullptr);
+		// Load vorbis data and copy to a buffer we'll use
+		vorbis_data_t vorbis;
+		if (false == LoadVorbisFile(filename, &vorbis)) return false;
+		cfg = ma_audio_buffer_config_init(ma_format_s16, vorbis.channels, vorbis.sample_count, vorbis.sample_data, nullptr);
 
 		sound_buffer_t* sound_buffer = &sound_control->sounds.sound_buffers[index];
 
 		sound_buffer->cnt = cnt;
-		sound_buffer->data = samples;
+		sound_buffer->data = vorbis.sample_data;
 		sound_buffer->buffers = new audio_buffer_t[cnt];
+		sound_buffer->channels = vorbis.channels;
+
 		if (nullptr == sound_buffer->buffers) return false;
+
 		for (int i = 0; i < cnt; i++) {
 			res = ma_audio_buffer_init(&cfg, &sound_buffer->buffers[i].buffer_info);
 		}
@@ -100,14 +86,14 @@ namespace Clb184 {
 		assert(nullptr != sound_control->sounds.sound_buffers);
 		assert(sound_control->sounds.cnt > index);
 		assert(nullptr != sound_control->sounds.sound_buffers[index].data);
-		
+
 		// Proceeed with the sound buffer
 		sound_buffer_t* sound_buffer = &sound_control->sounds.sound_buffers[index];
 
 		sound_buffer->cnt = 0; // Zero available buffers
-		delete sound_buffer->buffers; // Delete all buffers
+		delete[] sound_buffer->buffers; // Delete all buffers
 		sound_buffer->buffers = nullptr;
-		delete sound_buffer->data; // Delete the PCM data as is not needed anymore
+		delete[] sound_buffer->data; // Delete the PCM data as is not needed anymore
 		sound_buffer->data = nullptr;
 	}
 
@@ -131,7 +117,7 @@ namespace Clb184 {
 			if (buffer[i].status == AB_PLAY) continue;
 			buffer[i].status = AB_PLAY;
 			const float place = x * div_place;
-			buffer[i].place = (1.0f > place) ? 1.0f : (place < 0.0f) ? 0.0f : place;
+			buffer[i].place = (1.0f < place) ? 1.0f : (place < -1.0f) ? -1.0f : place;
 			ma_audio_buffer_seek_to_pcm_frame(&buffer[i].buffer_info, 0);
 			break;
 		}
@@ -144,7 +130,7 @@ namespace Clb184 {
 
 		assert(nullptr != all_buffer);
 		assert(nullptr != all_buffer->sound_buffers);
-		
+
 		int num_sbuffers = all_buffer->cnt;
 
 		// Go over all sound buffers
@@ -158,21 +144,38 @@ namespace Clb184 {
 				audio_buffer_t* abuffer = &sbuffer->buffers[i];
 				// Do not play whatever is stoped or paused
 				if (abuffer->status == AB_STOP) continue;
-				
+
 				ma_uint64 frms = ma_audio_buffer_read_pcm_frames(&abuffer->buffer_info, buff, frameCount, false);
 				if (frms) {
-					// Keep volume at bay
-					for (ma_uint64 j = 0; j < frms; j++) {
-						const int maxr = (buf[j * 2] + ((buff[j * 2]) >> 1) * (0.5 - abuffer->place));
-						const int maxl = (buf[j * 2 + 1] + ((buff[j * 2 + 1]) >> 1) * (0.5 + abuffer->place));
+					int maxr = 0, maxl = 0, acum = 0;
 
-						buf[j * 2] = (maxr > INT16_MAX) ? INT16_MAX : (maxr < INT16_MIN) ? INT16_MIN : maxr;
-						buf[j * 2 + 1] = (maxl > INT16_MAX) ? INT16_MAX : (maxl < INT16_MIN) ? INT16_MIN : maxl;
+					// Keep volume at bay
+					switch (sbuffer->channels) {
+					case 1:
+						for (int j = 0; j < frms; j++) {
+							acum = ((buff[j]) >> 0);
+							maxr = (buf[j * 2] + acum * (0.5 - abuffer->place));
+							maxl = (buf[j * 2 + 1] + acum * (0.5 + abuffer->place));
+
+							buf[j * 2] = (maxr > INT16_MAX) ? INT16_MAX : (maxr < INT16_MIN) ? INT16_MIN : maxr;
+							buf[j * 2 + 1] = (maxl > INT16_MAX) ? INT16_MAX : (maxl < INT16_MIN) ? INT16_MIN : maxl;
+						}
+						break;
+					case 2:
+						for (int j = 0; j < frms; j++) {
+							maxr = (buf[j * 2] + ((buff[j * 2]) >> 0) * (0.5 - abuffer->place));
+							maxl = (buf[j * 2 + 1] + ((buff[j * 2 + 1]) >> 0) * (0.5 + abuffer->place));
+
+							buf[j * 2] = (maxr > INT16_MAX) ? INT16_MAX : (maxr < INT16_MIN) ? INT16_MIN : maxr;
+							buf[j * 2 + 1] = (maxl > INT16_MAX) ? INT16_MAX : (maxl < INT16_MIN) ? INT16_MIN : maxl;
+						}
+						break;
 					}
 				}
 				else {
 					// It ended? just stop it
 					abuffer->status = AB_STOP;
+					abuffer->place = 0.0f;
 				}
 			}
 		}
