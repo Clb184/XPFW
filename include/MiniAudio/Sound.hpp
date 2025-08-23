@@ -28,7 +28,6 @@ namespace Clb184 {
 
 	struct sound_control_t {
 		ma_device device;
-		ma_decoder decoder;
 		sound_buffer_container_t sounds;
 	};
 

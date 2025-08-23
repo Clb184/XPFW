@@ -20,7 +20,6 @@ namespace Clb184 {
 
 		// Initialize device
 		if (MA_SUCCESS != ma_device_init(nullptr, &cfg, &sound_control->device)) {
-			ma_decoder_uninit(&sound_control->decoder);
 			return false;
 		}
 
@@ -32,7 +31,6 @@ namespace Clb184 {
 		// Now start sound
 		if (MA_SUCCESS != ma_device_start(&sound_control->device)) {
 			ma_device_uninit(&sound_control->device);
-			ma_decoder_uninit(&sound_control->decoder);
 			return false;
 		}
 
@@ -42,7 +40,6 @@ namespace Clb184 {
 	void DestroySoundControl(sound_control_t* sound_control) {
 		LOG_INFO("Destroying Sound Control");
 		assert(nullptr != sound_control);
-		ma_decoder_uninit(&sound_control->decoder);
 		ma_device_uninit(&sound_control->device);
 	}
 
