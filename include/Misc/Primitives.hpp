@@ -10,7 +10,7 @@
 * Note: These are just my default primitives to just drop and use
 * Mostly inspired by the T&L stuff since is just all I need
 ********************************************************************/
-namespace Clb184 {
+
 	// Just a single point
 	struct TVertex2D {
 		float x = 0.0f;
@@ -54,7 +54,7 @@ namespace Clb184 {
 			{2, 4, GL_UNSIGNED_BYTE, GL_TRUE, (sizeof(float) * 4)}
 		};
 
-		buffer_info_t buffinfo = { vb, sizeof(Clb184::TLVertex2D)};
+		buffer_info_t buffinfo = { vb, sizeof(TLVertex2D)};
 
 		CreateVertexAttribute(&TL2DAttributes[0], &buffinfo, &va);
 		CreateVertexAttribute(&TL2DAttributes[1], &buffinfo, &va);
@@ -115,7 +115,7 @@ namespace Clb184 {
 		{3, 3, GL_FLOAT, GL_FALSE, (sizeof(float) * 6)},
 		};
 
-		buffer_info_t buffinfo = { vb, sizeof(Clb184::TLVertex3D) };
+		buffer_info_t buffinfo = { vb, sizeof(TLVertex3D) };
 
 		CreateVertexAttribute(&TL3DAttributes[0], &buffinfo, &va);
 		CreateVertexAttribute(&TL3DAttributes[1], &buffinfo, &va);
@@ -125,5 +125,5 @@ namespace Clb184 {
 		*vbuffer = vb;
 		*vattribute = va;
 	}
-}
+
 #endif

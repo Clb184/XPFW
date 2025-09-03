@@ -3,8 +3,5 @@
 
 #include <miniaudio/miniaudio.h>
 
-namespace Clb184 {
-
-}
 
 #endif

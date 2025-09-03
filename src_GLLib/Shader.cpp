@@ -3,77 +3,75 @@
 #include "Output.hpp"
 #include "IO.hpp"
 
-namespace Clb184 {
-	bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shader_type) {
-		LOG_INFO("Creating Shader (File)");
-		assert(nullptr != shader_unit);
+bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shader_type) {
+	LOG_INFO("Creating Shader (File)");
+	assert(nullptr != shader_unit);
 
-		char* src = nullptr;
-		if(false == LoadTextFromFile(file_name, &src, nullptr)) return false;
+	char* src = nullptr;
+	if(false == LoadTextFromFile(file_name, &src, nullptr)) return false;
 
-		GLuint shader = glCreateShader(shader_type);
-		GLint status = -1;
-		GLchar buffer[1024] = "";
+	GLuint shader = glCreateShader(shader_type);
+	GLint status = -1;
+	GLchar buffer[1024] = "";
 
-		glShaderSource(shader, 1, &src, NULL);
-		glCompileShader(shader);
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-		if (0 == status) {
-			glGetShaderInfoLog(shader, 1024, NULL, buffer);
-			fprintf(stderr, "Shader compilation error log:\n%s\n", buffer);
-		}
-
-		GL_ERROR_RETURN();
-		free(src);
-		*shader_unit = shader;
-		return true;
+	glShaderSource(shader, 1, &src, NULL);
+	glCompileShader(shader);
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	if (0 == status) {
+		glGetShaderInfoLog(shader, 1024, NULL, buffer);
+		fprintf(stderr, "Shader compilation error log:\n%s\n", buffer);
 	}
 
-	bool LoadShaderFromMemory(const char* src, GLuint* shader_unit, GLenum shader_type) {
-		LOG_INFO("Creating Shader (Memory)");
+	GL_ERROR_RETURN();
+	free(src);
+	*shader_unit = shader;
+	return true;
+}
 
-		assert(nullptr != src); 
-		assert(nullptr != shader_unit);
+bool LoadShaderFromMemory(const char* src, GLuint* shader_unit, GLenum shader_type) {
+	LOG_INFO("Creating Shader (Memory)");
 
-		GLuint shader = glCreateShader(shader_type);
-		GLint status = -1;
-		GLchar buffer[1024] = "";
+	assert(nullptr != src); 
+	assert(nullptr != shader_unit);
 
-		glShaderSource(shader, 1, &src, NULL);
-		glCompileShader(shader);
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	GLuint shader = glCreateShader(shader_type);
+	GLint status = -1;
+	GLchar buffer[1024] = "";
 
-		if (0 == status) {
-			glGetShaderInfoLog(shader, 1024, NULL, buffer);
-			fprintf(stderr, "Shader compilation error log:\n%s\n", buffer);
-		}
+	glShaderSource(shader, 1, &src, NULL);
+	glCompileShader(shader);
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-		GL_ERROR_RETURN();
-		*shader_unit = shader;
-		return true;
+	if (0 == status) {
+		glGetShaderInfoLog(shader, 1024, NULL, buffer);
+		fprintf(stderr, "Shader compilation error log:\n%s\n", buffer);
 	}
 
-	bool CreateProgram(GLuint vertex_shader, GLuint fragment_shader, GLuint* program_unit) {
-		LOG_INFO("Creating Shader Program");
+	GL_ERROR_RETURN();
+	*shader_unit = shader;
+	return true;
+}
 
-		assert(nullptr != program_unit);
+bool CreateProgram(GLuint vertex_shader, GLuint fragment_shader, GLuint* program_unit) {
+	LOG_INFO("Creating Shader Program");
 
-		GLuint program = glCreateProgram();
-		GLint status = 0;
-		char buffer[1024] = "";
+	assert(nullptr != program_unit);
 
-		glAttachShader(program, vertex_shader);
-		glAttachShader(program, fragment_shader);
-		glLinkProgram(program);
-		glGetProgramiv(program, GL_LINK_STATUS, &status);
+	GLuint program = glCreateProgram();
+	GLint status = 0;
+	char buffer[1024] = "";
 
-		if (0 == status) {
-			glGetProgramInfoLog(program, 1024, NULL, buffer);
-			fprintf(stderr, "Program compilation error log:\n%s\n", buffer);
-		}
+	glAttachShader(program, vertex_shader);
+	glAttachShader(program, fragment_shader);
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, &status);
 
-		GL_ERROR_RETURN();
-		*program_unit = program;
-		return true;
+	if (0 == status) {
+		glGetProgramInfoLog(program, 1024, NULL, buffer);
+		fprintf(stderr, "Program compilation error log:\n%s\n", buffer);
 	}
+
+	GL_ERROR_RETURN();
+	*program_unit = program;
+	return true;
 }
