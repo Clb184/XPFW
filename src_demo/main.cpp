@@ -127,96 +127,70 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	glUnmapNamedBuffer(camera_data->buffer);
 }
 
-int main() {
-	LOG_INFO("Initializing demo");
-	InitializeSoundControl(snd_control, 3);
-	// We only play Vorbis files now
-	CreateSoundBuffer(snd_control, 0, 1, "exboss_2.ogg");
-	CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.ogg");
-	//PlaySndX(snd_control, 0, 200.0f);
+struct draw_cmd_t {
+	GLuint count = 0;
+	GLuint instance_cnt = 1;
+	GLuint first = 0;
+	GLuint base = 0;
+};
 
-	// Back with OpenGL...
-	if (0 == glfwInit()) return -1;
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	//glfwWindowHint(GLFW_SAMPLES, 16);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+struct TestData {
+	// Camera data, obviously
 	CameraData cmdata;
 
-	GLFWwindow* win = glfwCreateWindow(1280, 720, "OpenGL 4.6", nullptr, nullptr);
-	if (nullptr == win) return -1;
-	glfwMakeContextCurrent(win);
-#ifdef WIN32
-	if (GLEW_OK != glewInit()) { LOG_ERROR("Failed initializing GLEW"); return -1; }
-#elif defined linux
-	glewInit();z
-#endif
-
-	// Render buffer test
-	// Textures on OpenGL are flipped...
-	// Can't do much about it, but that's how it works
-	GLuint framebuff, render_tex;
-	glCreateTextures(GL_TEXTURE_2D, 1, &render_tex);
-	glBindTexture(GL_TEXTURE_2D, render_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1280, 720, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glCreateFramebuffers(1, &framebuff);
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuff);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_tex, 0);
-	if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
-		printf("Framebuffer incomplete\n");
-		return -1;
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	TLVertex2D fvert[4] = {
-		{1280.0f, 0.0f, 1.0f, 1.0f, 0xffffffff},
-		{1280.0f, 720.0f, 1.0f, 0.0f, 0xffffffff},
-		{0.0f, 0.0f, 0.0f, 1.0f, 0xffffffff},
-		{0.0f, 720.0f, 0.0f, 0.0f, 0xffffffff},
-	};
-	GLuint fvbo, fvao;
-	CreateTL2DVertexBuffer(4, fvert, GL_STATIC_DRAW, &fvbo, &fvao);
-
-	// Configuration of scene
-	//glEnable(GL_MULTISAMPLE);
-	glDisable(GL_CULL_FACE);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthRange(-1.0f, 1.0f);
-
-	while (GLenum e = glGetError()) {
-		printf("OpenGL Error %d\n", e);
-	}
-
+	// Shaders and their programs
 	GLuint vrt, frg, prg;
-	LoadShaderFromFile("Transform3D.vert", &vrt, GL_VERTEX_SHADER);
-	LoadShaderFromFile("Transform3D.frag", &frg, GL_FRAGMENT_SHADER);
-	if (false == CreateProgram(vrt, frg, &prg)) { LOG_ERROR("Failed creating 3D shader"); return -1; }
-
 	GLuint vrt2, frg2, prg2;
-	LoadShaderFromFile("T&L2D.vert", &vrt2, GL_VERTEX_SHADER);
-	LoadShaderFromFile("T&L2D.frag", &frg2, GL_FRAGMENT_SHADER);
-	if (false == CreateProgram(vrt2, frg2, &prg2)) { LOG_ERROR("Failed creating 2D shader"); return -1; }
+
+	// For Misaka texture and quad
+	GLuint tex = 0xffffffff;
+	int mw, mh;
+	GLuint mvbo, mvao;
+
+	GLuint vbuffer = -1, vattrib = -1;
+	
+	// Index data
+	GLuint idxs[18]; 
+	GLuint ibuffer = 0xffffffff;
+
+	// Draw Indirect
+	GLuint draw_buffer_cmd = 0xffffffff;
+
+	// Constant buffers
+	GLuint cbs[3] = { 0xffffffff, 0xffffffff, 0xffffffff };
+
+	// Sampler
+	GLuint sampler = 0xffffffff;
+
+	// Font loading
+	FT_Library library;
+	font_descriptor_t font_desc;
+	font_t* font = nullptr;
+
+};
+
+int InitializeAll(window_t* window, TestData* data) {
 
 
-	GLuint tex = -1;
+	LoadShaderFromFile("Transform3D.vert", &data->vrt, GL_VERTEX_SHADER);
+	LoadShaderFromFile("Transform3D.frag", &data->frg, GL_FRAGMENT_SHADER);
+	if (false == CreateShaderProgram(data->vrt, data->frg, &data->prg)) { LOG_ERROR("Failed creating 3D shader"); return -1; }
+
+	LoadShaderFromFile("T&L2D.vert", &data->vrt2, GL_VERTEX_SHADER);
+	LoadShaderFromFile("T&L2D.frag", &data->frg2, GL_FRAGMENT_SHADER);
+	if (false == CreateShaderProgram(data->vrt2, data->frg2, &data->prg2)) { LOG_ERROR("Failed creating 2D shader"); return -1; }
+
+	//
 	TLVertex2D mvert[4] = {
 		{1280.0f, 720.0f - 90.0f, 1.0f, 0.0f, 0xffffffff},
 		{1280.0f, 720.0f, 1.0f, 1.0f, 0xffffffff},
 		{1280.0f - 160.0f, 720.0f - 90.0f, 0.0f, 0.0f, 0xffffffff},
 		{1280.0f - 160.0f, 720.0f, 0.0f, 1.0f, 0xffffffff},
 	};
-	int mw, mh;
-	LoadTextureFromFile("misaka.png", &tex, &mw, &mh);
-	GLuint mvbo, mvao;
-	CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &mvbo, &mvao);
+	LoadTextureFromFile("misaka.png", &data->tex, &data->mw, &data->mh);
+	CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &data->mvbo, &data->mvao);
 
+	//
 	TLVertex3D verts[] = {
 		{ -5.0f, 0.0f, 0.0f,   0xff0000ff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },     // 0
 		{ 5.0f, 0.0f, 0.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 1
@@ -228,16 +202,9 @@ int main() {
 		{ 5.0f, 0.0f, -10.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 7
 	};
 
-	GLuint vbuffer = -1;
-	GLuint vattrib = -1;
-	CreateTL3DVertexBuffer(sizeof(verts) / sizeof(TLVertex3D), verts, GL_STATIC_DRAW, &vbuffer, &vattrib);
+	CreateTL3DVertexBuffer(sizeof(verts) / sizeof(TLVertex3D), verts, GL_STATIC_DRAW, &data->vbuffer, &data->vattrib);
 
-	GLuint idxs[] = { 0, 1, 2, 3, 1, 2, 0, 2, 4, 4, 0, 5, 4, 5, 6, 5, 6, 7};
-
-	buffer_descriptor_t ibuffer_desc = { sizeof(idxs), idxs, GL_DYNAMIC_DRAW };
-	GLuint ibuffer = -1;
-	CreateBuffer(&ibuffer_desc, &ibuffer);
-
+	//
 	float identity[] = {
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
@@ -246,27 +213,29 @@ int main() {
 	};
 	DirectX::XMMATRIX prj = DirectX::XMMatrixOrthographicOffCenterLH(0.0, 1280.0, 720.0f, 0.0f, 1.0f, -1.0f);
 
-	glUseProgram(prg2);
+	//
+	glUseProgram(data->prg2);
 	GL_ERROR();
 	glUniformMatrix4fv(0, 1, GL_FALSE, (float*)&prj);
 	GL_ERROR();
 
-	glUseProgram(prg);
+	glUseProgram(data->prg);
 	GL_ERROR();
-
-	struct draw_cmd_t {
-		GLuint count = sizeof(mvert) / sizeof(TLVertex2D);
-		GLuint instance_cnt = 1;
-		GLuint first = 0;
-		GLuint base = 0;
-	} draw_cmd;
+	draw_cmd_t draw_cmd; 
+	draw_cmd.count = sizeof(mvert) / sizeof(TLVertex2D);
 
 	buffer_descriptor_t buf = { sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW };
-	GLuint draw_buffer_cmd = -1;
-	CreateBuffer(&buf, &draw_buffer_cmd);
+	CreateBuffer(&buf, &data->draw_buffer_cmd);
 
-	glfwSetWindowUserPointer(win, &cmdata);
-	glfwSetKeyCallback(win, CameraKeyCallback);
+
+	// Indexes
+	GLuint idxs[] = {0, 1, 2, 3, 1, 2, 0, 2, 4, 4, 0, 5, 4, 5, 6, 5, 6, 7};
+
+	memcpy(data->idxs, idxs, sizeof(data->idxs));
+
+	buffer_descriptor_t ibuffer_desc = { sizeof(idxs), idxs, GL_DYNAMIC_DRAW };
+	CreateBuffer(&ibuffer_desc, &data->ibuffer);
+
 
 	// Normaldata
 	struct Normals {
@@ -283,95 +252,94 @@ int main() {
 	} WorldLight;
 
 	buffer_descriptor_t buf_desc[3] = {
-		{sizeof(cmdata.mt), &cmdata.mt, GL_DYNAMIC_DRAW},
+		{sizeof(data->cmdata.mt), &data->cmdata.mt, GL_DYNAMIC_DRAW},
 		{sizeof(normals), &normals, GL_DYNAMIC_DRAW},
 		{sizeof(WorldLight), &WorldLight, GL_DYNAMIC_DRAW}
 	};
-	GLuint cbs[3] = { 0xffffffff, 0xffffffff, 0xffffffff };
 
-	CreateBuffers(buf_desc, cbs, 3);
+	CreateBuffers(buf_desc, data->cbs, 3);
 
 	// First binding (General data)
-	cmdata.buffer = cbs[0];
-	cmdata.pos[0] = 0.0f;
-	cmdata.pos[1] = 0.0f;
-	cmdata.pos[2] = -5.0f;
+	data->cmdata.buffer = data->cbs[0];
+	data->cmdata.pos[0] = 0.0f;
+	data->cmdata.pos[1] = 0.0f;
+	data->cmdata.pos[2] = -5.0f;
 
-	BindConstantBuffer(cbs[0], 0);
-	BindConstantBuffer(cbs[1], 1);
-	BindConstantBuffer(cbs[2], 2);
+	BindConstantBuffer(data->cbs[0], 0);
+	BindConstantBuffer(data->cbs[1], 1);
+	BindConstantBuffer(data->cbs[2], 2);
 
-	glfwSwapInterval(1); // Actually vsync
-	double delta_time = 0.0;
+	CreateSampler(&data->sampler);
+	SetSamplerTextureMode(data->sampler, GL_NEAREST);
+	SetSamplerWrapMode(data->sampler, GL_REPEAT, GL_REPEAT);
+	glBindSampler(0, data->sampler);
 
-	GLuint sampler;
-	CreateSampler(&sampler);
-	SetSamplerTextureMode(sampler, GL_NEAREST);
-	SetSamplerWrapMode(sampler, GL_REPEAT, GL_REPEAT);
-	glBindSampler(0, sampler);
+	InitializeFreeType(&data->library);
+	LoadFontFromFile(data->library, &data->font_desc, "PermanentMarker-Regular.ttf");
+	data->font = new font_t;
+	CreateFontWithAtlas(data->font_desc, data->font, 20.0f);
 
-	FT_Library library;
-	font_descriptor_t font_desc;
-	font_t* font = new font_t;
-	InitializeFreeType(&library);
-	LoadFontFromFile(library, &font_desc, "PermanentMarker-Regular.ttf");
-	CreateFontWithAtlas(font_desc, font, 20.0f);
+	glfwSetWindowUserPointer(window->window, &data->cmdata);
+	glfwSetKeyCallback(window->window, CameraKeyCallback);
+	return 0;
+}
 
-	while (!glfwWindowShouldClose(win)) {
-		delta_time = glfwGetTime();
-		const float aver = 1.0f / delta_time;
-		//printf("delta_time: %5.4f\n", aver);
-		glfwSetTime(0.0);
-
-		// Process events and clear screen
-		glfwPollEvents();
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClearDepth(1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Move logic and update stuff
-		glUseProgram(prg);
-		MoveCamera(&cmdata, cmdata.mov_bits, delta_time);
-		glBindBuffer(GL_UNIFORM_BUFFER, cmdata.buffer);
-		glBindVertexArray(vattrib);
-		GL_ERROR();
+void DummyLoop(float delta_time, void* data) {
+	TestData* dat = (TestData*)data;
+	// Move logic and update stuff
+	glUseProgram(dat->prg);
+	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, delta_time);
+	glBindBuffer(GL_UNIFORM_BUFFER, dat->cmdata.buffer);
+	glBindVertexArray(dat->vattrib);
+	GL_ERROR();
 
 
-		// Draw with command buffer or other related functions
-		glEnable(GL_DEPTH_TEST);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDrawElements(GL_TRIANGLES, sizeof(idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
-		GL_ERROR();
+	// Draw with command buffer or other related functions
+	glEnable(GL_DEPTH_TEST);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dat->ibuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDrawElements(GL_TRIANGLES, sizeof(dat->idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+	GL_ERROR();
 
-		// Draw 2D
-		glDisable(GL_DEPTH_TEST);
-		glActiveTexture(GL_TEXTURE0);
-		glUseProgram(prg2);
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, draw_buffer_cmd);
-		GL_ERROR();
-		// Draw RenderTex
-		glBindTexture(GL_TEXTURE_2D, render_tex);
-		glBindVertexArray(fvao);
-		//glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
-		GL_ERROR();
-		// Draw font atlas
-		glBindVertexArray(mvao);
-		glBindTexture(GL_TEXTURE_2D, tex);
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
-		GL_ERROR();
-		DrawString(font, 0.0f, 0.0f,
-			"Hello World!, I'm doing fine, And YOU?\n"
-			"Well, I'm just trying to test if I can get away with writing whatever text I want\n"
-			"Will this RTX 3050 6GB stand this? with OpenGL 4.6\n"
-			"I should try this on my other machine with an AMD A4-6210 with Radeon R3 graphics as well"
-		);
-		char bf[10] = "";
-		sprintf(bf, "%.2f", aver);
-		DrawString(font, 0.0f, 640.0f, bf);
-		// Move the Swap Chain
-		glfwSwapBuffers(win);
-	}
+	// Draw 2D
+	glDisable(GL_DEPTH_TEST);
+	glActiveTexture(GL_TEXTURE0);
+	glUseProgram(dat->prg2);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, dat->draw_buffer_cmd);
+	GL_ERROR();
+
+	// Draw font atlas
+	glBindVertexArray(dat->mvao);
+	glBindTexture(GL_TEXTURE_2D, dat->tex);
+	glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
+	GL_ERROR();
+	DrawString(dat->font, 0.0f, 0.0f,
+		"Hello World!, I'm doing fine, And YOU?\n"
+		"Well, I'm just trying to test if I can get away with writing whatever text I want\n"
+		"Will this RTX 3050 6GB stand this? with OpenGL 4.6\n"
+		"I should try this on my other machine with an AMD A4-6210 with Radeon R3 graphics as well"
+	);
+	char bf[24] = "";
+	sprintf(bf, "%.2f fps", 1.0f / delta_time);
+	DrawString(dat->font, 0.0f, 640.0f, bf);
+}
+
+int main() {
+	LOG_INFO("Initializing demo");
+	InitializeSoundControl(snd_control, 3);
+
+	// We only play Vorbis files now
+	CreateSoundBuffer(snd_control, 0, 1, "exboss_2.ogg");
+	CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.ogg");
+
+	// Create window
+	window_t window_data;
+	TestData data;
+
+	CreateGLWindow("OpenGL 4.6", 1280, 720, false, DummyLoop, &data, &window_data);
+	InitializeAll(&window_data, &data);
+	RunMainLoop(&window_data);
+	DestroyWindow(&window_data);
 
 	DestroySoundControl(snd_control);
 }
