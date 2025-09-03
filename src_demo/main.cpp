@@ -7,16 +7,15 @@
 #include <math.h>
 #include <immintrin.h>
 
+// Includes for making DirectXMath work on Linux with no problems apparently
 #ifdef __linux__
 	#include <algorithm>
 	#include <iterator>
 	#include <utility>
 	#include <format>
 #endif
+
 #include <DirectXMath.h>
-#include <miniaudio.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 
 struct CameraMatrix {
 	float camera[16] = {
@@ -128,41 +127,8 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	glUnmapNamedBuffer(camera_data->buffer);
 }
 
-struct audio_buffer_t {
-	int cnt = 0;
-	ma_audio_buffer buffers[64];
-};
-
-void DataPlayback (ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-	audio_buffer_t* abuffer = (audio_buffer_t*)pDevice->pUserData;
-	ma_int16* buf = (ma_int16*)pOutput;
-	ma_int16 buff[4096] = {0};
-	if (nullptr == abuffer) return;
-	for (int i = 0; i < abuffer->cnt; i++ ) {
-		ma_uint64 frms = ma_audio_buffer_read_pcm_frames(abuffer->buffers + i, buff, frameCount, false);
-		for (ma_uint64 j = 0; j < frms * 2; j++) {
-			int max = buf[j] + buff[j];
-			buf[j] = (max > INT16_MAX) ? INT16_MAX : (max < INT16_MIN) ? INT16_MIN : max;
-		}
-	}
-}
-
-void CreateSoundBuffer(ma_decoder* decoder, ma_uint64 frames, int channel, ma_int16** data) {
-	ma_int16* samples = new ma_int16[frames * channel + 2];
-	ma_int16* offset = samples;
-	ma_uint64 frm = 0;
-	ma_uint64 frm_total = 0;
-	do {
-		ma_decoder_read_pcm_frames(decoder, offset, 4096, &frm);
-		offset += frm * channel;
-		frm_total += frm;
-	} while (frm);
-	*data = samples;
-	return;
-}
-
-
 int main() {
+	LOG_INFO("Initializing demo");
 	Clb184::InitializeSoundControl(snd_control, 3);
 	// We only play Vorbis files now
 	Clb184::CreateSoundBuffer(snd_control, 0, 1, "exboss_2.ogg");
