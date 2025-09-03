@@ -52,7 +52,7 @@ bool LoadShaderFromMemory(const char* src, GLuint* shader_unit, GLenum shader_ty
 	return true;
 }
 
-bool CreateProgram(GLuint vertex_shader, GLuint fragment_shader, GLuint* program_unit) {
+bool CreateShaderProgram(GLuint vertex_shader, GLuint fragment_shader, GLuint* program_unit) {
 	LOG_INFO("Creating Shader Program");
 
 	assert(nullptr != program_unit);
