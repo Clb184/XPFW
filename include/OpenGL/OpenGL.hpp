@@ -8,5 +8,6 @@
 #include "Texture.hpp"
 #include "Sampler.hpp"
 #include "Font.hpp"
+#include "Window.hpp"
 
 #endif
