@@ -63,7 +63,7 @@ bool CreateGLWindowFromState(window_state_t state, main_loop_fn loop_fn, window_
 void RunMainLoop(window_t* window) {
 	// Show from icon, this could be done after loading everything
 	glfwIconifyWindow(window->window);
-	_sleep(1000);
+	_sleep(1000); // Just wait a bit for the "restore window" (kinda imitating some game over there)
 	glfwShowWindow(window->window);
 	glfwRestoreWindow(window->window);
 
