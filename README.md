@@ -6,8 +6,8 @@ To build, you must find a copy of GLEW, which you can find [here](https://github
 This is my procedure for creating the Project:
 
 ``
-root > mkdir build
-root > cd build
+root > mkdir build  
+root > cd build  
 root > cmake ..
 ``
 
