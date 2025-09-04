@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(GLLib2025 LANGUAGES C CXX) 
+project(XPFW LANGUAGES C CXX) 
 
 option(BUILD_DEMO ON)
 
@@ -58,7 +58,7 @@ set(BUILD_UTILS OFF)
 add_subdirectory(deps/glew/build/cmake)
 
 # Build the library first (Also set name)
-set(GLLIB_NAME GLLib2025)
+set(GLLIB_NAME XPFWLib)
 add_subdirectory(src)
 
 # Maybe the demo?

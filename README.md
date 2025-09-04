@@ -1,4 +1,11 @@
-# OpenGL Library for doing stupid stuff 
+# Cross (X) Platform FrameWork for doing stupid stuff
 
-What a surprise another little framework for just wasting time.
-Just use CMake with this.
+I finally acknowledged that this is a framework in the name.
+To build, you must find a copy of GLEW, which you can find [here](https://github.com/nigels-com/glew/releases), I couldn't add as a submodule as the repository is incomplete.
+
+This is my procedure for creating the Project:
+
+``root > mkdir build root > cd build root > cmake ..``
+
+In the momento of the `cmake` command, you can add `-G` for your favorite IDE, I guess, I use MSVC in this case.
+
