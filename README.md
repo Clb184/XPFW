@@ -5,7 +5,11 @@ To build, you must find a copy of GLEW, which you can find [here](https://github
 
 This is my procedure for creating the Project:
 
-``root > mkdir build root > cd build root > cmake ..``
+``
+root > mkdir build
+root > cd build
+root > cmake ..
+``
 
-In the momento of the `cmake` command, you can add `-G` for your favorite IDE, I guess, I use MSVC in this case.
+In the moment of the `cmake` command, you can add `-G` for your favorite IDE, I guess, I use MSVC in this case.
 
