@@ -59,7 +59,7 @@ add_subdirectory(deps/glew/build/cmake)
 
 # Build the library first (Also set name)
 set(GLLIB_NAME GLLib2025)
-add_subdirectory(src_GLLib)
+add_subdirectory(src)
 
 # Maybe the demo?
 add_subdirectory(src_demo)
