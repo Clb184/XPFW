@@ -1,6 +1,4 @@
 #include "GLLibMain.hpp"
-#include <GLFW/glfw3.h>
-#include <GL/glew.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
