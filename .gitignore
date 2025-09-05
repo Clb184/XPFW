@@ -4,3 +4,4 @@ build/
 *.exe 
 deps/glew/
 include/sal.h
+demo/*
