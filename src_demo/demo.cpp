@@ -1,4 +1,4 @@
-#include "GLLibMain.hpp"
+#include "XPFW.hpp"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +33,6 @@ struct CameraData {
 	CameraMatrix mt;
 };
 
-#include "MiniAudio/Sound.hpp"
 
 sound_control_t* snd_control = new sound_control_t;
 

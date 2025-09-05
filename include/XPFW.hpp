@@ -3,5 +3,6 @@
 
 #include "OpenGL/OpenGL.hpp"
 #include "Misc/Primitives.hpp"
+#include "MiniAudio/Sound.hpp"
 
 #endif
