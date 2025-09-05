@@ -1,14 +1,19 @@
-#include "OpenGL/Window.hpp"
-#include "Output.hpp"
+#include "OpenGL/Window.h"
+#include "Output.h"
 #include <assert.h>
 
 window_state_t DefaultWindowState() {
-	return { false, 640, 480, "OpenGL 4.6" };
+	window_state_t ret;
+	ret.fullscreen = false;
+	ret.width = 640;
+	ret.height = 480;
+	ret.title = "OpenGL 4.6";
+	return; // { false, 640, 480, "OpenGL 4.6" };
 }
 
 bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, main_loop_fn loop_fn, void* data, window_t* window_data) {
 	LOG_INFO("Creating Window with params (Creating State Struct)");
-	assert(nullptr != window_data);
+	assert(0 != window_data);
 
 	window_state_t state;
 	state.fullscreen = fullscreen;
@@ -21,7 +26,7 @@ bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, m
 
 bool CreateGLWindowFromState(window_state_t state, main_loop_fn loop_fn, window_t* window_data) {
 	LOG_INFO("Creating Window with OpenGL 4.6 support with GLFW");
-	assert(nullptr != window_data);
+	assert(0 != window_data);
 
 	// Start GLFW with Core OpenGL 4.6 support
 	if (0 == glfwInit()) return -1;
@@ -33,8 +38,8 @@ bool CreateGLWindowFromState(window_state_t state, main_loop_fn loop_fn, window_
 	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	GLFWwindow* win = glfwCreateWindow(state.width, state.height, state.title, state.fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
-	if (nullptr == win) { LOG_ERROR("Failed creating GLFW window"); return false; }
+	GLFWwindow* win = glfwCreateWindow(state.width, state.height, state.title, state.fullscreen ? glfwGetPrimaryMonitor() : 0, 0);
+	if (0 == win) { LOG_ERROR("Failed creating GLFW window"); return false; }
 	glfwMakeContextCurrent(win);
 
 	// Initialize GLEW
@@ -91,9 +96,9 @@ void RunMainLoop(window_t* window) {
 	}
 }
 
-void DestroyWindow(window_t* window) {
+void DestroyGLWindow(window_t* window) {
 	glfwDestroyWindow(window->window);
-	window->window = nullptr;
+	window->window = 0;
 	glfwTerminate();
 
 }

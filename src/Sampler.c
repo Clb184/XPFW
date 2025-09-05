@@ -1,10 +1,11 @@
-#include "OpenGL/Sampler.hpp"
+#include "OpenGL/Sampler.h"
 #include <assert.h>
-#include "Output.hpp"
+#include "Output.h"
 
 bool CreateSampler(GLuint* unit) {
 	LOG_INFO("Creating Sampler");
-	assert(nullptr != unit);
+	assert(0 != unit);
+	GLERR;
 	*unit = 0xffffffff;
 	glCreateSamplers(1, unit);
 	GL_ERROR_RETURN();

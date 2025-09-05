@@ -1,14 +1,15 @@
-#include "OpenGL/Shader.hpp"
+#include "OpenGL/Shader.h"
 #include <assert.h>
-#include "Output.hpp"
-#include "IO.hpp"
+#include "Output.h"
+#include "IO.h"
 
 bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shader_type) {
 	LOG_INFO("Creating Shader (File)");
-	assert(nullptr != shader_unit);
+	assert(0 != shader_unit);
+	GLERR;
 
-	char* src = nullptr;
-	if(false == LoadTextFromFile(file_name, &src, nullptr)) return false;
+	char* src = 0;
+	if(false == LoadTextFromFile(file_name, &src, 0)) return false;
 
 	GLuint shader = glCreateShader(shader_type);
 	GLint status = -1;
@@ -31,8 +32,9 @@ bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shade
 bool LoadShaderFromMemory(const char* src, GLuint* shader_unit, GLenum shader_type) {
 	LOG_INFO("Creating Shader (Memory)");
 
-	assert(nullptr != src); 
-	assert(nullptr != shader_unit);
+	assert(0 != src); 
+	assert(0 != shader_unit);
+	GLERR;
 
 	GLuint shader = glCreateShader(shader_type);
 	GLint status = -1;
@@ -55,7 +57,8 @@ bool LoadShaderFromMemory(const char* src, GLuint* shader_unit, GLenum shader_ty
 bool CreateShaderProgram(GLuint vertex_shader, GLuint fragment_shader, GLuint* program_unit) {
 	LOG_INFO("Creating Shader Program");
 
-	assert(nullptr != program_unit);
+	assert(0 != program_unit);
+	GLERR;
 
 	GLuint program = glCreateProgram();
 	GLint status = 0;

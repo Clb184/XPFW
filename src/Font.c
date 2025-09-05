@@ -1,7 +1,7 @@
-#include "OpenGL/Font.hpp"
+#include "OpenGL/Font.h"
 #include <assert.h>
-#include "Output.hpp"
-#include <Misc/Primitives.hpp>
+#include "Output.h"
+#include <Misc/Primitives.h>
 
 
 bool InitializeFreeType(FT_Library* library) { // Just a way to say "FT_Init_Library == FT_Err_Ok"
@@ -15,21 +15,21 @@ bool UninitializeFreeType(FT_Library library) {
 
 bool LoadFontFromFile(FT_Library library, font_descriptor_t* font, const char* font_name) {
 	LOG_INFO("Loading Font from file");
-	assert(nullptr != font);
+	assert(0 != font);
 	return FT_Err_Ok == FT_New_Face(library, font_name, 0, font);
 }
 
 // Size is in pixels... But needs some adjustments...
 bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) {
 	LOG_INFO("Creating Font Atlas with size");
-	assert(nullptr != font);
-	assert(nullptr != font_desc);
+	assert(0 != font);
+	assert(0 != font_desc);
 
 	FT_Error e;
 	FT_Face face = font_desc;
 
 	// Get face data
-	e = FT_Set_Char_Size(face, int(size) << 6, int(size) << 6, 64, 64);
+	e = FT_Set_Char_Size(face, (int)size << 6, (int)size << 6, 64, 64);
 	if (FT_Err_Ok != e) { FT_Done_Face(face); return false; }
 
 	int sz = size, glyph_quad = 1;
@@ -41,11 +41,10 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	GLuint font_atlas;
 	glCreateTextures(GL_TEXTURE_2D, 1, &font_atlas);
 	int x = 0, y = 0;
-	float div_width = 1.0f / float(atlas_size); // 
-	constexpr float div_64 = 1.0f / 64.0f;
+	float div_width = 1.0f / (float)atlas_size; // 
+	const float div_64 = 1.0f / 64.0f;
 
-	int* expanded_pixel_data = new int[atlas_size * atlas_size];
-	memset(expanded_pixel_data, 0x00, sizeof(int) * atlas_size * atlas_size);
+	int* expanded_pixel_data = calloc(sizeof(int), atlas_size * atlas_size);
 
 
 	font->size = size;
@@ -102,12 +101,12 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	font->font_atlas = font_atlas;
 	
 	// Create the vertex buffer and vertex array
-	CreateTL2DVertexBuffer(1024L * 6L, nullptr, GL_DYNAMIC_DRAW, &font->vbuffer, &font->varray); // At least 1024 characters per font (And size)
+	CreateTL2DVertexBuffer(1024L * 6L, 0, GL_DYNAMIC_DRAW, &font->vbuffer, &font->varray); // At least 1024 characters per font (And size)
 	return true;
 }
 
 void DrawString(font_t* font, float ox, float oy, const char* string) {
-	assert(nullptr != font);
+	assert(0 != font);
 
 	int len = strlen(string);
 	const float block_advance = font->size;

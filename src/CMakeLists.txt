@@ -1,5 +1,5 @@
-file(GLOB lib_hpp *.hpp)
-file(GLOB lib_cpp *.cpp)
+file(GLOB lib_hpp *.h)
+file(GLOB lib_cpp *.c)
 
 # And create the library
 add_library(${GLLIB_NAME} ${lib_cpp})

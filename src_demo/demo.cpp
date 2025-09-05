@@ -1,4 +1,5 @@
-#include "XPFW.hpp"
+// Framework and that stuff
+#include "XPFW.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -32,7 +33,6 @@ struct CameraData {
 	float rot[4] = {};
 	CameraMatrix mt;
 };
-
 
 sound_control_t* snd_control = new sound_control_t;
 
@@ -167,7 +167,7 @@ struct TestData {
 };
 
 int InitializeAll(window_t* window, TestData* data) {
-
+	GLERR;
 
 	LoadShaderFromFile("Transform3D.vert", &data->vrt, GL_VERTEX_SHADER);
 	LoadShaderFromFile("Transform3D.frag", &data->frg, GL_FRAGMENT_SHADER);
@@ -282,7 +282,9 @@ int InitializeAll(window_t* window, TestData* data) {
 }
 
 void DummyLoop(float delta_time, void* data) {
-	TestData* dat = (TestData*)data;
+	TestData* dat = (TestData*)data; 
+	GLERR;
+	
 	// Move logic and update stuff
 	glUseProgram(dat->prg);
 	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, delta_time);
@@ -336,7 +338,7 @@ int main() {
 	CreateGLWindow("OpenGL 4.6", 1280, 720, false, DummyLoop, &data, &window_data);
 	InitializeAll(&window_data, &data);
 	RunMainLoop(&window_data);
-	DestroyWindow(&window_data);
+	DestroyGLWindow(&window_data);
 
 	DestroySoundControl(snd_control);
 }

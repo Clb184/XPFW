@@ -1,12 +1,14 @@
-#include "OpenGL/Buffer.hpp"
-#include "Output.hpp"
+#include "OpenGL/Buffer.h"
+#include "Output.h"
 #include <assert.h>
 
 // Creates a buffer
 bool CreateBuffer(const buffer_descriptor_t* descriptor, GLuint* buffer_id) {
 	LOG_INFO("Creating Buffer");
-	assert(nullptr != descriptor);
-	assert(nullptr != buffer_id);
+	assert(0 != descriptor);
+	assert(0 != buffer_id);
+	GLERR;
+
 	GLuint buf = -1;
 	glCreateBuffers(1, &buf);
 	if (-1 == buf) return false;
@@ -21,8 +23,9 @@ bool CreateBuffer(const buffer_descriptor_t* descriptor, GLuint* buffer_id) {
 // Same as above, but creates multiple buffers
 bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, int cnt) {
 	LOG_INFO("Creating Buffers");
-	assert(nullptr != descriptors);
-	assert(nullptr != buffer_ids);
+	assert(0 != descriptors);
+	assert(0 != buffer_ids);
+	GLERR;
 
 	glCreateBuffers(cnt, buffer_ids);
 	for (int i = 0; i < cnt; i++) {
@@ -35,10 +38,12 @@ bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, i
 }
 
 bool CreateVertexAttribute(const attribute_info_t* attribute_data, const buffer_info_t* buffer_data, GLuint* vertex_array) {
-	assert(nullptr != attribute_data);
-	assert(nullptr != buffer_data);
-	assert(nullptr != vertex_array);
+	assert(0 != attribute_data);
+	assert(0 != buffer_data);
+	assert(0 != vertex_array);
 	assert(glIsVertexArray(*vertex_array));
+	GLERR;
+
 	GLuint va = *vertex_array;
 	if (-1 == va) return false;
 	
@@ -72,6 +77,8 @@ bool CreateVertexAttribute(const attribute_info_t* attribute_data, const buffer_
 
 void BindConstantBuffer(const GLuint buffer, int index) {
 	assert(buffer > 0);
+	GLERR;
+
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer);
 	GL_ERROR();
 }

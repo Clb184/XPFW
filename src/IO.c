@@ -1,11 +1,12 @@
-#include "IO.hpp"
+#include "IO.h"
 #include <assert.h>
 
 bool LoadDataFromFile(const char* file_name, void** src, size_t* size) {
-	assert(src != nullptr);
+	assert(src != 0);
 	size_t sz;
+	FILE* fp = 0;
 
-	if (FILE *fp = fopen(file_name, "rb")) {
+	if (fp = fopen(file_name, "rb")) {
 		fseek(fp, 0, SEEK_END);
 		sz = ftell(fp);
 		rewind(fp);
@@ -26,10 +27,11 @@ bool LoadDataFromFile(const char* file_name, void** src, size_t* size) {
 }
 
 bool LoadTextFromFile(const char* file_name, char** src, size_t* size) {
-	assert(src != nullptr);
+	assert(src != 0);
 	size_t sz;
+	FILE* fp = 0;
 
-	if (FILE *fp = fopen(file_name, "r")) {
+	if (fp = fopen(file_name, "r")) {
 		fseek(fp, 0, SEEK_END);
 		sz = ftell(fp);
 		rewind(fp);
