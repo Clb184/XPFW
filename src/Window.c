@@ -3,12 +3,12 @@
 #include <assert.h>
 
 window_state_t DefaultWindowState() {
-	window_state_t ret;
+	window_state_t ret = {0};
 	ret.fullscreen = false;
 	ret.width = 640;
 	ret.height = 480;
 	ret.title = "OpenGL 4.6";
-	return; // { false, 640, 480, "OpenGL 4.6" };
+	return ret; // { false, 640, 480, "OpenGL 4.6" };
 }
 
 bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, main_loop_fn loop_fn, void* data, window_t* window_data) {

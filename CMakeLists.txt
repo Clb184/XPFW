@@ -27,6 +27,17 @@ endif()
 # I only use static libs so I have less files to deal with,
 # and also use some debug postfix like d for debug builds
 set(CMAKE_DEBUG_POSTFIX "d")
+
+# Replace the "Release" string however was written so
+# the CMAKE_DEBUG_POSTFIX variable can be "removed"
+string(REGEX REPLACE "([Rr][Ee][Ll][Ee][Aa][Ss][Ee])" "RELEASE" RELEASE_CFG ${CMAKE_BUILD_TYPE})
+
+if("RELEASE" STREQUAL ${RELEASE_CFG})
+set(CMAKE_DEBUG_POSTFIX "")
+endif()
+
+message("Debug postfix is: ${CMAKE_DEBUG_POSTFIX} for ${CMAKE_BUILD_TYPE}" )
+
 set(ZLIB_BUILD_STATIC ON)
 set(ZLIB_BUILD_SHARED OFF)
 set(PNG_STATIC ON)

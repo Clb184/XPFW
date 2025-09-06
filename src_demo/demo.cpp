@@ -313,10 +313,8 @@ void DummyLoop(float delta_time, void* data) {
 	glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 	GL_ERROR();
 	DrawString(dat->font, 0.0f, 0.0f,
-		"Hello World!, I'm doing fine, And YOU?\n"
-		"Well, I'm just trying to test if I can get away with writing whatever text I want\n"
-		"Will this RTX 3050 6GB stand this? with OpenGL 4.6\n"
-		"I should try this on my other machine with an AMD A4-6210 with Radeon R3 graphics as well"
+		"Finally, I compiled this thing with LLVM! Isn't that crazy?\n"
+		"There's still some other stuff I should try as well, me thinks"
 	);
 	char bf[24] = "";
 	sprintf(bf, "%.2f fps", 1.0f / delta_time);

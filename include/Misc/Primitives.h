@@ -45,7 +45,7 @@ extern "C" {
 		assert(0 != vbuffer);
 		assert(0 != vattribute);
 
-		buffer_descriptor_t vbd = { num_vertex * sizeof(TLVertex2D), pdata, usage };
+		buffer_descriptor_t vbd = { (GLsizei)(num_vertex * sizeof(TLVertex2D)), pdata, usage };
 		GLuint vb = -1;
 		CreateBuffer(&vbd, &vb);
 
@@ -105,7 +105,7 @@ extern "C" {
 		assert(0 != vbuffer);
 		assert(0 != vattribute);
 
-		buffer_descriptor_t vbd = { num_vertex * sizeof(TLVertex3D), pdata, usage};
+		buffer_descriptor_t vbd = { (GLsizei)(num_vertex * sizeof(TLVertex3D)), pdata, usage};
 		GLuint vb = -1;
 		CreateBuffer(&vbd, &vb);
 

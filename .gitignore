@@ -5,3 +5,4 @@ build/
 deps/glew/
 include/sal.h
 demo/*
+CMakeSettings.json
