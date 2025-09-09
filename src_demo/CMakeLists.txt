@@ -11,8 +11,8 @@ if (MSVC)
 endif()
 target_include_directories(demo
 	PUBLIC
-	${CMAKE_HOME_DIRECTORY}/include/
-	${CMAKE_HOME_DIRECTORY}/deps/glew/include/
+	/include/
+	/deps/glew/include/
 )
 target_link_libraries(demo ${GLLIB_NAME} DirectXMath)
 set_target_properties(demo PROPERTIES DEBUGGER_WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY}/demo/)

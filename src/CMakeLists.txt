@@ -13,8 +13,8 @@ endif()
 target_link_libraries(${GLLIB_NAME} glfw glew_s zlibstatic png_static miniaudio DirectXMath freetype vorbis vorbisfile ogg)
 target_include_directories(${GLLIB_NAME}
 	PUBLIC
-	${CMAKE_HOME_DIRECTORY}/include/
-	${CMAKE_HOME_DIRECTORY}/deps/glew/include/
+	/include/
+	/deps/glew/include/
 )
 
 message("Lib path: ${CMAKE_HOME_DIRECTORY}/include/")
