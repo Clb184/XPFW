@@ -23,6 +23,7 @@ endif()
 if(NOT ${CMAKE_BUILD_TYPE})
 	message("Configuration not selected, defaulting to debug")
 	set(CMAKE_BUILD_TYPE "Debug")
+	message("Config is now ${CMAKE_BUILD_TYPE}")
 endif()
 
 # Set some variables to disable stuff I don't want to build.
