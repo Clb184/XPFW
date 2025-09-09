@@ -20,6 +20,11 @@ else()
 	file(DOWNLOAD https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h  ${CMAKE_HOME_DIRECTORY}/include/sal.h )
 endif()
 
+if("" STREQUAL ${CMAKE_BUILD_TYPE})
+	message("Configuration not selected, defaulting to debug")
+	set(${CMAKE_BUILD_TYPE} "Debug")
+endif()
+
 # Set some variables to disable stuff I don't want to build.
 # I only use static libs so I have less files to deal with,
 # and also use some debug postfix like d for debug builds
