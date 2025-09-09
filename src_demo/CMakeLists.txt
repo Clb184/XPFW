@@ -14,6 +14,6 @@ target_include_directories(demo
 	/include/
 	/deps/glew/include/
 )
-target_link_libraries(demo ${GLLIB_NAME} DirectXMath)
+target_link_libraries(demo PUBLIC ${GLLIB_NAME} DirectXMath)
 set_target_properties(demo PROPERTIES DEBUGGER_WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY}/demo/)
 message("Lib path: ${CMAKE_HOME_DIRECTORY}/include/")
