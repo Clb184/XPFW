@@ -10,11 +10,11 @@ if (MSVC)
     target_link_options(${GLLIB_NAME} PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
     target_compile_options(${GLLIB_NAME} PRIVATE $<$<CONFIG:Debug>:/ZI>)
 endif()
-target_link_libraries(${GLLIB_NAME} PRIVATE glfw glew_s zlibstatic png_static miniaudio DirectXMath freetype vorbis vorbisfile ogg)
+target_link_libraries(${GLLIB_NAME} PUBLIC glfw glew_s zlibstatic png_static miniaudio DirectXMath freetype vorbis vorbisfile ogg)
 target_include_directories(${GLLIB_NAME}
 	PUBLIC
-	/include/
-	/deps/glew/include/
+	${XPFW_ROOT}/include/
+	${XPFW_ROOT}/deps/glew/include/
 )
 
-message("Lib path: ${CMAKE_HOME_DIRECTORY}/include/")
+message("Lib path: ${XPFW_ROOT}/include/")

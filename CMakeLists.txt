@@ -74,6 +74,7 @@ add_subdirectory(deps/glew/build/cmake)
 
 # Build the library first (Also set name)
 set(GLLIB_NAME XPFW)
+set(XPFW_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(src)
 
 # Maybe the demo?

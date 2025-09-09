@@ -11,9 +11,9 @@ if (MSVC)
 endif()
 target_include_directories(demo
 	PUBLIC
-	/include/
-	/deps/glew/include/
+	${XPFW_ROOT}/include/
+	${XPFW_ROOT}/deps/glew/include/
 )
 target_link_libraries(demo PUBLIC ${GLLIB_NAME} DirectXMath)
 set_target_properties(demo PROPERTIES DEBUGGER_WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY}/demo/)
-message("Lib path: ${CMAKE_HOME_DIRECTORY}/include/")
+message("Lib path: ${XPFW_ROOT}/include/")
