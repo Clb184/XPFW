@@ -10,8 +10,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED 20)
 # If you don't have a copy of GLEW and are just looking over here, have this link, this is what I use:
 # https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
 
+set(GLEW_DIR ${CMAKE_HOME_DIRECTORY}/deps/glew)
+message("GLEW is located at ${GLEW_DIR}")
 # Extract downloaded files
-if (NOT EXISTS ./deps/glew)
+if (NOT EXISTS ${GLEW_DIR})
 	message(FATAL_ERROR "Get a copy of GLEW, sorry that I can't just add it as a submodule, I do this because the repository is incomplete and to not be dependent on Internet connection")
 endif()
 
