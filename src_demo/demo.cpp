@@ -281,7 +281,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	return 0;
 }
 
-void DummyLoop(float delta_time, void* data) {
+LOOP_FN(DummyLoop) {
 	TestData* dat = (TestData*)data; 
 	GLERR;
 	
@@ -317,7 +317,7 @@ void DummyLoop(float delta_time, void* data) {
 		"There's still some other stuff I should try as well, me thinks"
 	);
 	char bf[24] = "";
-	sprintf(bf, "%.2f fps", 1.0f / delta_time);
+	sprintf(bf, "%.2f fps", window->fps);
 	DrawString(dat->font, 0.0f, 640.0f, bf);
 }
 
@@ -333,9 +333,9 @@ int main() {
 	window_t window_data;
 	TestData data;
 
-	CreateGLWindow("OpenGL 4.6", 1280, 720, false, DummyLoop, &data, &window_data);
+	CreateGLWindow("OpenGL 4.6", 1280, 720, false, &window_data);
 	InitializeAll(&window_data, &data);
-	RunMainLoop(&window_data);
+	RunMainLoop(&window_data, &data, DummyLoop);
 	DestroyGLWindow(&window_data);
 
 	DestroySoundControl(snd_control);

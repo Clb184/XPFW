@@ -3,7 +3,7 @@
 #include <assert.h>
 
 window_state_t DefaultWindowState() {
-	window_state_t ret = {0};
+	window_state_t ret = { 0 };
 	ret.fullscreen = false;
 	ret.width = 640;
 	ret.height = 480;
@@ -11,20 +11,19 @@ window_state_t DefaultWindowState() {
 	return ret; // { false, 640, 480, "OpenGL 4.6" };
 }
 
-bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, main_loop_fn loop_fn, void* data, window_t* window_data) {
+bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, window_t* window_data) {
 	LOG_INFO("Creating Window with params (Creating State Struct)");
 	assert(0 != window_data);
 
-	window_state_t state;
+	window_state_t state = { 0 };
 	state.fullscreen = fullscreen;
 	state.width = width;
 	state.height = height;
 	state.title = title;
-	window_data->data = data;
-	return CreateGLWindowFromState(state, loop_fn, window_data);
+	return CreateGLWindowFromState(state, window_data);
 }
 
-bool CreateGLWindowFromState(window_state_t state, main_loop_fn loop_fn, window_t* window_data) {
+bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	LOG_INFO("Creating Window with OpenGL 4.6 support with GLFW");
 	assert(0 != window_data);
 
@@ -46,12 +45,11 @@ bool CreateGLWindowFromState(window_state_t state, main_loop_fn loop_fn, window_
 #ifdef WIN32
 	if (GLEW_OK != glewInit()) { LOG_ERROR("Failed initializing GLEW"); return false; }
 #elif defined linux
-	// Linux is weird here, so we don't check it
+	// Linux is weird here, so don't check it
 	glewInit();
 #endif
 
 	window_data->window_state = state;
-	window_data->main_loop = loop_fn;
 	window_data->window = win;
 
 	// Default config for what I usually use
@@ -65,7 +63,7 @@ bool CreateGLWindowFromState(window_state_t state, main_loop_fn loop_fn, window_
 	return true;
 }
 
-void RunMainLoop(window_t* window) {
+void RunMainLoop(window_t* window, void* data, main_loop_fn main_loop) {
 	// Show from icon, this could be done after loading everything
 	glfwIconifyWindow(window->window);
 	_sleep(1000); // Just wait a bit for the "restore window" (kinda imitating some game over there)
@@ -89,7 +87,7 @@ void RunMainLoop(window_t* window) {
 		window->fps = 1.0 / delta_time; // Set delta time, somewhat conveniently (?
 
 		// Run main loop
-		window->main_loop(delta_time, window->data);
+		main_loop(window, delta_time, data);
 
 		// Move the Swap Chain
 		glfwSwapBuffers(window->window);
@@ -97,6 +95,7 @@ void RunMainLoop(window_t* window) {
 }
 
 void DestroyGLWindow(window_t* window) {
+	// Destroy window and all related
 	glfwDestroyWindow(window->window);
 	window->window = 0;
 	glfwTerminate();
