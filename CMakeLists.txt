@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED 20)
 # If you don't have a copy of GLEW and are just looking over here, have this link, this is what I use:
 # https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
 
+message("Directory is ${CMAKE_SOURCE_DIR}")
 message("Make sure to have a copy of GLEW in the 'deps' folder, sorry that I can't just add it as a submodule, I do this because the repository is incomplete and to not be dependent on Internet connection")
 
 # sal.h for DirectXMath
@@ -51,8 +52,8 @@ set(PNG_EXECUTABLES OFF)
 if(WIN32)
 set(ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/deps/zlib/zs${CMAKE_DEBUG_POSTFIX}${CMAKE_STATIC_LIBRARY_SUFFIX}" )
 endif()
-set(ZLIB_INCLUDE_DIR "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
-set(ZLIB_ROOT "${CMAKE_HOME_DIRECTORY}/deps/zlib/" )
+set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/zlib/" )
+set(ZLIB_ROOT "${CMAKE_SOURCE_DIR}/deps/zlib/" )
 set(FT_DISABLE_HARFBUZZ ON)
 set(FT_REQUIRE_HARFBUZZ OFF)
 set(FT_DYNAMIC_HARFBUZZ OFF)
