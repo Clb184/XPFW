@@ -76,4 +76,6 @@ set(GLLIB_NAME XPFW)
 add_subdirectory(src)
 
 # Maybe the demo?
+if(${BUILD_DEMO})
 add_subdirectory(src_demo)
+endif()
