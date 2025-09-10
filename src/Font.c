@@ -105,9 +105,8 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	return true;
 }
 
-void DrawString(font_t* font, float ox, float oy, const char* string) {
+void DrawString(font_t* font, float ox, float oy, const char* string, uint32_t color) {
 	assert(0 != font);
-
 	int len = strlen(string);
 	const float block_advance = font->size;
 	float x = ox, y = oy + block_advance;
@@ -133,30 +132,34 @@ void DrawString(font_t* font, float ox, float oy, const char* string) {
 		vert[ic * 6].y = y + glyph.t;
 		vert[ic * 6].u = glyph.x1;
 		vert[ic * 6].v = glyph.y1;
+		vert[ic * 6].color = color;
 		vert[ic * 6 + 3] = vert[ic * 6];
 
 		vert[ic * 6 + 1].x = x + glyph.r;
 		vert[ic * 6 + 1].y = y + glyph.t;
 		vert[ic * 6 + 1].u = glyph.x2;
 		vert[ic * 6 + 1].v = glyph.y1;
+		vert[ic * 6 + 1].color = color;
 
 		vert[ic * 6 + 2].x = x + glyph.r;
 		vert[ic * 6 + 2].y = y + glyph.b;
 		vert[ic * 6 + 2].u = glyph.x2;
 		vert[ic * 6 + 2].v = glyph.y2;
+		vert[ic * 6 + 2].color = color;
 		vert[ic * 6 + 4] = vert[ic * 6 + 2];
 
 		vert[ic * 6 + 5].x = x + glyph.l;
 		vert[ic * 6 + 5].y = y + glyph.b;
 		vert[ic * 6 + 5].u = glyph.x1;
 		vert[ic * 6 + 5].v = glyph.y2;
+		vert[ic * 6 + 5].color = color;
 
 		x += glyph.adv;
 		ic++;
 	}
 
 	glUnmapNamedBuffer(font->vbuffer);
-	glBindTexture(GL_TEXTURE_2D, font->font_atlas);
+	glBindTextureUnit(0, font->font_atlas);
 	glBindVertexArray(font->varray);
 	glDrawArrays(GL_TRIANGLES, 0, ic * 6);
 }
