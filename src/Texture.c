@@ -114,7 +114,7 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 	free(ppRows);
 
 	// Get these properties if requested
-	if (0 != metric) {
+	if (0 != metrics) {
 	       	metric->width = width;
 		metric->height = height;
 		metric->texelw = 1.0f / (float)width;
