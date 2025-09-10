@@ -12,11 +12,12 @@ void CreateTexture(GLuint* tex_unit, GLsizei w, GLsizei h, char* pixel_data) {
 	assert(0 != tex_unit);
 	GLERR;
 
-	// Create test texture for png
+	// Create texture for png
 	GLuint tex_png;
 	glCreateTextures(GL_TEXTURE_2D, 1, &tex_png);
-	glBindTexture(GL_TEXTURE_2D, tex_png);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixel_data); // Always using RGBA 8 bit per channel
+	glTextureStorage2D(tex_png, 1, GL_RGBA32F, w, h);
+	GL_ERROR();
+	glTextureSubImage2D(tex_png, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixel_data); // Always using RGBA 8 bit per channel
 	GL_ERROR();
 	*tex_unit = tex_png;
 }
