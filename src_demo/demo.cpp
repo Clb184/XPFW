@@ -141,7 +141,7 @@ struct TestData {
 
 	// For Misaka texture and quad
 	GLuint tex = 0xffffffff;
-	int mw, mh;
+	texture_metric_t mmetric;
 	GLuint mvbo, mvao;
 
 	GLuint vbuffer = -1, vattrib = -1;
@@ -184,7 +184,7 @@ int InitializeAll(window_t* window, TestData* data) {
 		{1280.0f - 160.0f, 720.0f - 90.0f, 0.0f, 0.0f, 0xffffffff},
 		{1280.0f - 160.0f, 720.0f, 0.0f, 1.0f, 0xffffffff},
 	};
-	LoadTextureFromFile("misaka.png", &data->tex, &data->mw, &data->mh);
+	LoadTextureFromFile("misaka.png", &data->tex, &data->mmetric);
 	CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &data->mvbo, &data->mvao);
 
 	//

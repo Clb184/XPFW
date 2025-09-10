@@ -38,8 +38,6 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	}
 	int atlas_size = glyph_quad * 16;
 
-	GLuint font_atlas;
-	glCreateTextures(GL_TEXTURE_2D, 1, &font_atlas);
 	int x = 0, y = 0;
 	float div_width = 1.0f / (float)atlas_size; // 
 	const float div_64 = 1.0f / 64.0f;
@@ -94,8 +92,10 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	}
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glBindTexture(GL_TEXTURE_2D, font_atlas);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, atlas_size, atlas_size, 0, GL_RGBA, GL_UNSIGNED_BYTE, expanded_pixel_data);
+	GLuint font_atlas;
+	glCreateTextures(GL_TEXTURE_2D, 1, &font_atlas);
+	glTextureStorage2D(font_atlas, 1, GL_RGBA32F, atlas_size, atlas_size);
+	glTextureSubImage2D(font_atlas, 0, 0, 0, atlas_size, atlas_size, GL_RGBA, GL_UNSIGNED_BYTE, expanded_pixel_data);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
 
 	font->font_atlas = font_atlas;
