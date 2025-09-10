@@ -34,7 +34,7 @@ void LoadPNGFromMemory(png_structp png, png_bytep buf, size_t size) {
 	data->offset += size;
 }
 
-bool LoadTextureFromFile(const char* name, GLuint* tex_unit, int* o_width, int* o_height) {
+bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* metrics) {
 	LOG_INFO("Loading texture from file");
 	assert(0 != tex_unit);
 
@@ -114,8 +114,12 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, int* o_width, int* 
 	free(ppRows);
 
 	// Get these properties if requested
-	if (0 != o_width) *o_width = width;
-	if (0 != o_height) *o_height = height;
+	if (0 != metric) {
+	       	metric->width = width;
+		metric->height = height;
+		metric->texelw = 1.0f / (float)width;
+		metric->texelh = 1.0f / (float)height;
+	}
 	return true;
 }
 
