@@ -6,6 +6,8 @@ option(BUILD_DEMO ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED 17)
 
 # If you don't have a copy of GLEW and are just looking over here, have this link, this is what I use:
 # https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
@@ -79,6 +81,6 @@ set(XPFW_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(src)
 
 # Maybe the demo?
-if(${BUILD_DEMO})
+#if(${BUILD_DEMO})
 add_subdirectory(src_demo)
-endif()
+#endif()

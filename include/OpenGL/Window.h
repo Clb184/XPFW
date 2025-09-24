@@ -9,12 +9,13 @@
 extern "C" {
 #endif
 
-#define LOOP_FN(x) void x (window_t* window, float delta_time, void* data)
+#define LOOP_FN(x) void x (window_t* window, void* data)
 
 typedef struct {
 	bool fullscreen; // = false;
 	int width; // = 0;
 	int height; // = 0;
+	float delta_draw; // 60.0f by default 
 	const char* title; // = "";
 } window_state_t;
 
@@ -22,15 +23,18 @@ typedef struct {
 	GLFWwindow* window; // = nullptr;
 	void* data; // = nullptr;
 	float fps; // = 0.0f;
+	float delta_time; // 0.0f
+	float logic_acum;
+	float draw_acum;
 	window_state_t window_state;
 } window_t;
 
-typedef void (*main_loop_fn) (window_t* window, float delta_time, void* data);
+typedef void (*loop_fn) (window_t* window, void* data);
 
 window_state_t DefaultWindowState();
-bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, window_t* window_data);
+bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, float delta_draw, window_t* window_data);
 bool CreateGLWindowFromState(window_state_t state, window_t* window_data);
-void RunMainLoop(window_t* window, void* data, main_loop_fn main_loop);
+void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_loop);
 void DestroyGLWindow(window_t* window);
 
 #ifdef __cplusplus
