@@ -89,23 +89,23 @@ int _DrawLoopThreadFn(void* data) {
 	glClearDepth(1.0f);
 
 	glfwMakeContextCurrent(gl_win);
+	glfwSwapInterval(1); // Enable VSync
 
 	double past = glfwGetTime();
 	while (!std::atomic_load(&draw_info->on_exit)) {
 		if (std::atomic_load(&draw_info->on_draw)) {
 			draw_info->resource_mutex.lock();
 
-
 			// Clear Screen
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Draw function
 			draw_loop(draw_info->window_data, draw_info->data);
+			draw_info->resource_mutex.unlock();
 
 			// Move the Swap Chain
 			glfwSwapBuffers(gl_win);
 
-			draw_info->resource_mutex.unlock();
 			double now = glfwGetTime();
 			draw_info->window_data->draw_acum = now - past;
 			past = now;
@@ -135,19 +135,14 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 
 	float past_time = 0.0f;
 
-	glfwSwapInterval(1); // Enable VSync
 	glfwMakeContextCurrent(0);
-	draw_info.resource_mutex.lock();
 	std::thread draw_thread(_DrawLoopThreadFn, &draw_info);
 
-	draw_info.resource_mutex.unlock();
 	while (!glfwWindowShouldClose(window->window)) {
-		double temp = glfwGetTime();
-		const double delta_time = temp - past_time;
-		past_time = temp;
-
 		// Process events and clear screen
 		glfwPollEvents();
+
+		double temp = glfwGetTime();
 
 		// Run main loop
 		// Move logic, fixed at 60 tps for convenience
@@ -161,6 +156,9 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			draw_info.resource_mutex.unlock();
 			_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
 		}
+
+		const double delta_time = temp - past_time;
+		past_time = temp;
 		logic_tick_acum += delta_time;
 	}
 	std::atomic_store(&draw_info.on_exit, true);
