@@ -32,6 +32,7 @@ struct CameraData {
 	float pos[4] = {};
 	float rot[4] = {};
 	CameraMatrix mt;
+	DirectX::XMMATRIX cam_eye;
 };
 
 sound_control_t* snd_control = new sound_control_t;
@@ -116,12 +117,8 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	DirectX::XMVECTOR eye_pos = _mm_load_ps(camera_data->pos);
 	DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, o, _mm_set_ps(0.0, 0.0f, 1.0f, 0.0f));
 	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 16.0f/9.0f, 0.1f, 1000.0f);
-	DirectX::XMMATRIX cam_eye = eye * cam;
+	camera_data->cam_eye = eye * cam;
 
-	// Write and send data to the GPU
-	CameraMatrix* pData = (CameraMatrix*)glMapNamedBuffer(camera_data->buffer, GL_WRITE_ONLY);
-	memcpy(&pData->camera, &cam_eye, sizeof(DirectX::XMMATRIX));
-	glUnmapNamedBuffer(camera_data->buffer);
 }
 
 struct draw_cmd_t {
@@ -281,13 +278,23 @@ int InitializeAll(window_t* window, TestData* data) {
 	return 0;
 }
 
-LOOP_FN(DummyLoop) {
+LOOP_FN(MoveLoop) {
+
+	TestData* dat = (TestData*)data;
+	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, window->logic_acum);
+}
+
+LOOP_FN(DrawLoop) {
 	TestData* dat = (TestData*)data; 
 	GLERR;
+
+	// Write and send data to the GPU
+	CameraMatrix* pData = (CameraMatrix*)glMapNamedBuffer(dat->cmdata.buffer, GL_WRITE_ONLY);
+	memcpy(&pData->camera, &dat->cmdata.cam_eye, sizeof(DirectX::XMMATRIX));
+	glUnmapNamedBuffer(dat->cmdata.buffer);
 	
 	// Move logic and update stuff
 	glUseProgram(dat->prg);
-	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, delta_time);
 	glBindBuffer(GL_UNIFORM_BUFFER, dat->cmdata.buffer);
 	glBindVertexArray(dat->vattrib);
 	GL_ERROR();
@@ -314,11 +321,14 @@ LOOP_FN(DummyLoop) {
 	GL_ERROR();
 	DrawString(dat->font, 0.0f, 0.0f,
 		"Finally, I compiled this thing with LLVM! Isn't that crazy?\n"
-		"There's still some other stuff I should try as well, me thinks"
+		"There's still some other stuff I should try as well, me thinks",
+		0xffffffff
 	);
 	char bf[24] = "";
-	sprintf(bf, "%.2f fps", window->fps);
-	DrawString(dat->font, 0.0f, 640.0f, bf);
+	sprintf(bf, "%.2f tps", 1.0f / window->logic_acum);
+	DrawString(dat->font, 0.0f, 616.0f, bf, 0xffffffff);
+	sprintf(bf, "%.2f fps", 1.0f / window->draw_acum);
+	DrawString(dat->font, 0.0f, 640.0f, bf, 0xffffffff);
 }
 
 int main() {
@@ -333,9 +343,9 @@ int main() {
 	window_t window_data;
 	TestData data;
 
-	CreateGLWindow("OpenGL 4.6", 1280, 720, false, &window_data);
+	CreateGLWindow("OpenGL 4.6", 1280, 720, false, 144.0f, &window_data);
 	InitializeAll(&window_data, &data);
-	RunMainLoop(&window_data, &data, DummyLoop);
+	RunMainLoop(&window_data, &data, MoveLoop, DrawLoop);
 	DestroyGLWindow(&window_data);
 
 	DestroySoundControl(snd_control);
