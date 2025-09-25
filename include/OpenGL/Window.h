@@ -15,7 +15,6 @@ typedef struct {
 	bool fullscreen; // = false;
 	int width; // = 0;
 	int height; // = 0;
-	float delta_draw; // 60.0f by default 
 	const char* title; // = "";
 } window_state_t;
 
@@ -30,7 +29,7 @@ typedef struct {
 typedef void (*loop_fn) (window_t* window, void* data);
 
 window_state_t DefaultWindowState();
-bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, float delta_draw, window_t* window_data);
+bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, window_t* window_data);
 bool CreateGLWindowFromState(window_state_t state, window_t* window_data);
 void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_loop);
 float GetWindowFPS(window_t* window);

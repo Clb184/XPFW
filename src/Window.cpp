@@ -10,12 +10,11 @@ window_state_t DefaultWindowState() {
 	ret.fullscreen = false;
 	ret.width = 640;
 	ret.height = 480;
-	ret.delta_draw = 60.0;
 	ret.title = "OpenGL 4.6";
 	return ret; // { false, 640, 480, "OpenGL 4.6" };
 }
 
-bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, float delta_draw, window_t* window_data) {
+bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, window_t* window_data) {
 	LOG_INFO("Creating Window with params (Creating State Struct)");
 	assert(0 != window_data);
 
@@ -23,7 +22,6 @@ bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, f
 	state.fullscreen = fullscreen;
 	state.width = width;
 	state.height = height;
-	state.delta_draw = delta_draw;
 	state.title = title;
 	return CreateGLWindowFromState(state, window_data);
 }
@@ -161,7 +159,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			logic_tick_acum = 0.0f;
 			std::atomic_store(&draw_info.on_draw, true);
 			draw_info.resource_mutex.unlock();
-			//_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
+			_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
 		}
 
 		const double delta_time = temp - past_time;

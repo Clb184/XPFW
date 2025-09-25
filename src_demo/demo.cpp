@@ -342,7 +342,7 @@ int main() {
 	// Create window and run main loop
 	window_t window_data;
 	TestData data;
-	CreateGLWindow("OpenGL 4.6", 1280, 720, false, 144.0f, &window_data);
+	CreateGLWindow("OpenGL 4.6", 1280, 720, false, &window_data);
 	InitializeAll(&window_data, &data);
 	RunMainLoop(&window_data, &data, MoveLoop, DrawLoop);
 
