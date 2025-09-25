@@ -281,7 +281,7 @@ int InitializeAll(window_t* window, TestData* data) {
 LOOP_FN(MoveLoop) {
 
 	TestData* dat = (TestData*)data;
-	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, window->logic_acum);
+	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, window->delta_time);
 }
 
 LOOP_FN(DrawLoop) {
@@ -325,9 +325,9 @@ LOOP_FN(DrawLoop) {
 		0xffffffff
 	);
 	char bf[24] = "";
-	sprintf(bf, "%.2f tps", 1.0f / window->logic_acum);
+	sprintf(bf, "%.2f tps", GetWindowTPS(window));
 	DrawString(dat->font, 0.0f, 616.0f, bf, 0xffffffff);
-	sprintf(bf, "%.2f fps", 1.0f / window->draw_acum);
+	sprintf(bf, "%.2f fps", GetWindowFPS(window));
 	DrawString(dat->font, 0.0f, 640.0f, bf, 0xffffffff);
 }
 
@@ -339,14 +339,12 @@ int main() {
 	CreateSoundBuffer(snd_control, 0, 1, "exboss_2.ogg");
 	CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.ogg");
 
-	// Create window
+	// Create window and run main loop
 	window_t window_data;
 	TestData data;
-
 	CreateGLWindow("OpenGL 4.6", 1280, 720, false, 144.0f, &window_data);
 	InitializeAll(&window_data, &data);
 	RunMainLoop(&window_data, &data, MoveLoop, DrawLoop);
-	DestroyGLWindow(&window_data);
 
 	DestroySoundControl(snd_control);
 }
