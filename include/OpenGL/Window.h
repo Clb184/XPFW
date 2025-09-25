@@ -22,10 +22,8 @@ typedef struct {
 typedef struct {
 	GLFWwindow* window; // = nullptr;
 	void* data; // = nullptr;
-	float fps; // = 0.0f;
 	float delta_time; // 0.0f
-	float logic_acum;
-	float draw_acum;
+	void* __internal;
 	window_state_t window_state;
 } window_t;
 
@@ -35,6 +33,8 @@ window_state_t DefaultWindowState();
 bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, float delta_draw, window_t* window_data);
 bool CreateGLWindowFromState(window_state_t state, window_t* window_data);
 void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_loop);
+float GetWindowFPS(window_t* window);
+float GetWindowTPS(window_t* window);
 void DestroyGLWindow(window_t* window);
 
 #ifdef __cplusplus

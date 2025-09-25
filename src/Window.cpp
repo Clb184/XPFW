@@ -77,6 +77,8 @@ struct draw_info_t {
 	float fps;
 	std::atomic_bool on_exit;
 	std::atomic_bool on_draw;
+	std::atomic<double> delta_draw;
+	std::atomic<double> delta_move;
 };
 
 int _DrawLoopThreadFn(void* data) {
@@ -107,7 +109,7 @@ int _DrawLoopThreadFn(void* data) {
 			glfwSwapBuffers(gl_win);
 
 			double now = glfwGetTime();
-			draw_info->window_data->draw_acum = now - past;
+			draw_info->delta_draw = now - past;
 			past = now;
 		}
 	}
@@ -132,6 +134,10 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 	draw_info.fps = 0.0f;
 	draw_info.on_exit = false;
 	std::atomic_store(&draw_info.on_draw, false);
+	std::atomic_store(&draw_info.delta_move, 0.0);
+	std::atomic_store(&draw_info.delta_draw, 0.0);
+
+	window->__internal = &draw_info;
 
 	float past_time = 0.0f;
 
@@ -149,12 +155,13 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 		if (logic_tick_acum >= delta_logic) {
 			std::atomic_store(&draw_info.on_draw, false);
 			draw_info.resource_mutex.lock();
-			window->logic_acum = logic_tick_acum;
+			std::atomic_store(&draw_info.delta_move, logic_tick_acum);
+			window->delta_time = logic_tick_acum;
 			move_loop(window, data);
 			logic_tick_acum = 0.0f;
 			std::atomic_store(&draw_info.on_draw, true);
 			draw_info.resource_mutex.unlock();
-			_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
+			//_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
 		}
 
 		const double delta_time = temp - past_time;
@@ -163,7 +170,17 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 	}
 	std::atomic_store(&draw_info.on_exit, true);
 	draw_thread.join();
-	int draw_res = 0;
+
+	// Doing this only for convenience
+	DestroyGLWindow(window);
+}
+
+float GetWindowFPS(window_t* window) {
+	return 1.0 / std::atomic_load(&((draw_info_t*)window->__internal)->delta_draw);
+}
+
+float GetWindowTPS(window_t* window) {
+	return 1.0 / std::atomic_load(&((draw_info_t*)window->__internal)->delta_move);
 }
 
 void DestroyGLWindow(window_t* window) {
