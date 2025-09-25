@@ -159,6 +159,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			logic_tick_acum = 0.0f;
 			std::atomic_store(&draw_info.on_draw, true);
 			draw_info.resource_mutex.unlock();
+			_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
 		}
 		logic_tick_acum += delta_time;
 	}
