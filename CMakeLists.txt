@@ -6,8 +6,8 @@ option(BUILD_DEMO ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
-set(CMAKE_C_STANDARD 17)
-set(CMAKE_C_STANDARD_REQUIRED 17)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED 23)
 
 # If you don't have a copy of GLEW and are just looking over here, have this link, this is what I use:
 # https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip

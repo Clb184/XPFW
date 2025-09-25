@@ -2,6 +2,7 @@
 #include "Output.h"
 #include <assert.h>
 #include <thread>
+#include <stdatomic.h>
 #include <mutex>
 
 window_state_t DefaultWindowState() {
@@ -74,8 +75,8 @@ struct draw_info_t {
 	window_t* window_data;
 	void* data;
 	float fps;
-	bool on_exit;
-	bool on_draw;
+	std::atomic_bool on_exit;
+	std::atomic_bool on_draw;
 };
 
 int _DrawLoopThreadFn(void* data) {
@@ -90,8 +91,8 @@ int _DrawLoopThreadFn(void* data) {
 	glfwMakeContextCurrent(gl_win);
 
 	double past = glfwGetTime();
-	while (!draw_info->on_exit) {
-		if (draw_info->on_draw) {
+	while (!std::atomic_load(&draw_info->on_exit)) {
+		if (std::atomic_load(&draw_info->on_draw)) {
 			draw_info->resource_mutex.lock();
 
 
@@ -111,7 +112,6 @@ int _DrawLoopThreadFn(void* data) {
 		}
 	}
 
-	draw_info->on_exit = true;
 	return 0;
 }
 
@@ -131,7 +131,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 	draw_info.data = data;
 	draw_info.fps = 0.0f;
 	draw_info.on_exit = false;
-	draw_info.on_draw = false;
+	std::atomic_store(&draw_info.on_draw, false);
 
 	float past_time = 0.0f;
 
@@ -152,19 +152,17 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 		// Run main loop
 		// Move logic, fixed at 60 tps for convenience
 		if (logic_tick_acum >= delta_logic) {
-			draw_info.on_draw = false;
+			std::atomic_store(&draw_info.on_draw, false);
 			draw_info.resource_mutex.lock();
 			window->logic_acum = logic_tick_acum;
 			move_loop(window, data);
 			logic_tick_acum = 0.0f;
-			draw_info.on_draw = true;
+			std::atomic_store(&draw_info.on_draw, true);
 			draw_info.resource_mutex.unlock();
 		}
 		logic_tick_acum += delta_time;
 	}
-	draw_info.resource_mutex.lock();
-	draw_info.on_exit = true;
-	draw_info.resource_mutex.unlock();
+	std::atomic_store(&draw_info.on_exit, true);
 	draw_thread.join();
 	int draw_res = 0;
 }
