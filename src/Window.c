@@ -40,6 +40,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	GLFWwindow* win = glfwCreateWindow(state.width, state.height, state.title, state.fullscreen ? glfwGetPrimaryMonitor() : 0, 0);
 	if (0 == win) { LOG_ERROR("Failed creating GLFW window"); return false; }
 	glfwMakeContextCurrent(win);
+	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	// Initialize GLEW
 #ifdef WIN32
@@ -60,6 +61,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthRange(-1.0f, 1.0f);
+	glViewport(0.0f, 0.0f, state.width, state.height);
 	return true;
 }
 
