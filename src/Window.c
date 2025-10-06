@@ -103,7 +103,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 	// Enable VSync
 	glfwSwapInterval(0);
 
-	float past_time = 0.0f;
+	double past_time = 0.0f;
 
 	bool on_sleep = false;
 	while (!glfwWindowShouldClose(window->window)) {
@@ -135,7 +135,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			// Move the Swap Chain
 			glfwSwapBuffers(win);
 			draw_tick_acum = 0.0;
-			_sleep(1);
+			//_sleep(1);
 		}
 
 		const double delta_time = temp - past_time;
