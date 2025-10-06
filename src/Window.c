@@ -101,11 +101,11 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 	glClearDepth(1.0f);
 
 	// Enable VSync
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 
 	float past_time = 0.0f;
 
-
+	bool on_sleep = false;
 	while (!glfwWindowShouldClose(window->window)) {
 		// Process events and clear screen
 		glfwPollEvents();
@@ -120,6 +120,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			draw_info.delta_move = logic_tick_acum;
 			move_loop(window, data);
 			logic_tick_acum = 0.0f;
+			on_sleep = true;
 		}
 
 		if (draw_tick_acum >= delta_draw) {
@@ -134,6 +135,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			// Move the Swap Chain
 			glfwSwapBuffers(win);
 			draw_tick_acum = 0.0;
+			_sleep(1);
 		}
 
 		const double delta_time = temp - past_time;
