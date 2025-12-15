@@ -1,9 +1,6 @@
 #include "OpenGL/Window.h"
 #include "Output.h"
 #include <assert.h>
-#include <thread>
-#include <stdatomic.h>
-#include <mutex>
 
 window_state_t DefaultWindowState() {
 	window_state_t ret = { 0 };
@@ -43,6 +40,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	GLFWwindow* win = glfwCreateWindow(state.width, state.height, state.title, state.fullscreen ? glfwGetPrimaryMonitor() : 0, 0);
 	if (0 == win) { LOG_ERROR("Failed creating GLFW window"); return false; }
 	glfwMakeContextCurrent(win);
+	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	// Initialize GLEW
 #ifdef WIN32
@@ -63,57 +61,18 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthRange(-1.0f, 1.0f);
+	glViewport(0.0f, 0.0f, state.width, state.height);
 	return true;
 }
 
 struct draw_info_t {
-	std::mutex resource_mutex;
-
 	loop_fn draw_fn;
 	window_t* window_data;
 	void* data;
 	float fps;
-	std::atomic_bool on_exit;
-	std::atomic_bool on_draw;
-	std::atomic<double> delta_draw;
-	std::atomic<double> delta_move;
+	double delta_draw;
+	double delta_move;
 };
-
-int _DrawLoopThreadFn(void* data) {
-	struct draw_info_t* draw_info = (struct draw_info_t*)data;
-	GLFWwindow* gl_win = draw_info->window_data->window;
-	loop_fn draw_loop = draw_info->draw_fn;
-
-	// Clear color
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClearDepth(1.0f);
-
-	glfwMakeContextCurrent(gl_win);
-	glfwSwapInterval(1); // Enable VSync
-
-	double past = glfwGetTime();
-	while (!std::atomic_load(&draw_info->on_exit)) {
-		if (std::atomic_load(&draw_info->on_draw)) {
-			draw_info->resource_mutex.lock();
-
-			// Clear Screen
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			// Draw function
-			draw_loop(draw_info->window_data, draw_info->data);
-			draw_info->resource_mutex.unlock();
-
-			// Move the Swap Chain
-			glfwSwapBuffers(gl_win);
-
-			double now = glfwGetTime();
-			draw_info->delta_draw = now - past;
-			past = now;
-		}
-	}
-
-	return 0;
-}
 
 void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_loop) {
 	// Show from icon, this could be done after loading everything
@@ -123,25 +82,30 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 	glfwRestoreWindow(window->window);
 
 	const double delta_logic = 1.0 / 60.0;
+	const double delta_draw = 1.0 / 60.0;
 	double logic_tick_acum = 0.0f;
+	double draw_tick_acum = 0.0f;
 
 	struct draw_info_t draw_info;
 	draw_info.draw_fn = draw_loop;
 	draw_info.window_data = window;
 	draw_info.data = data;
 	draw_info.fps = 0.0f;
-	draw_info.on_exit = false;
-	std::atomic_store(&draw_info.on_draw, false);
-	std::atomic_store(&draw_info.delta_move, 0.0);
-	std::atomic_store(&draw_info.delta_draw, 0.0);
+
+	GLFWwindow* win = window->window;
 
 	window->__internal = &draw_info;
 
-	float past_time = 0.0f;
+	// Clear color
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearDepth(1.0f);
 
-	glfwMakeContextCurrent(0);
-	std::thread draw_thread(_DrawLoopThreadFn, &draw_info);
+	// Enable VSync
+	glfwSwapInterval(0);
 
+	double past_time = 0.0f;
+
+	bool on_sleep = false;
 	while (!glfwWindowShouldClose(window->window)) {
 		// Process events and clear screen
 		glfwPollEvents();
@@ -151,34 +115,45 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 		// Run main loop
 		// Move logic, fixed at 60 tps for convenience
 		if (logic_tick_acum >= delta_logic) {
-			std::atomic_store(&draw_info.on_draw, false);
-			draw_info.resource_mutex.lock();
-			std::atomic_store(&draw_info.delta_move, logic_tick_acum);
+
 			window->delta_time = logic_tick_acum;
+			draw_info.delta_move = logic_tick_acum;
 			move_loop(window, data);
 			logic_tick_acum = 0.0f;
-			std::atomic_store(&draw_info.on_draw, true);
-			draw_info.resource_mutex.unlock();
-			_sleep(1); // I don't want to waste too much CPU, also I put it here cuz it gives the best result, at least for now
+			on_sleep = true;
+		}
+
+		if (draw_tick_acum >= delta_draw) {
+
+			// Clear Screen
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			// Draw function
+			draw_info.delta_draw = draw_tick_acum;
+			draw_loop(draw_info.window_data, draw_info.data);
+
+			// Move the Swap Chain
+			glfwSwapBuffers(win);
+			draw_tick_acum = 0.0;
+			//_sleep(1);
 		}
 
 		const double delta_time = temp - past_time;
 		past_time = temp;
 		logic_tick_acum += delta_time;
+		draw_tick_acum += delta_time;
 	}
-	std::atomic_store(&draw_info.on_exit, true);
-	draw_thread.join();
 
 	// Doing this only for convenience
 	DestroyGLWindow(window);
 }
 
 float GetWindowFPS(window_t* window) {
-	return 1.0 / std::atomic_load(&((draw_info_t*)window->__internal)->delta_draw);
+	return 1.0 / ((struct draw_info_t*)window->__internal)->delta_draw;
 }
 
 float GetWindowTPS(window_t* window) {
-	return 1.0 / std::atomic_load(&((draw_info_t*)window->__internal)->delta_move);
+	return 1.0 / ((struct draw_info_t*)window->__internal)->delta_move;
 }
 
 void DestroyGLWindow(window_t* window) {
