@@ -75,17 +75,17 @@ endif()
 
 if (NOT BUILD_FRAMEWORK)
     add_library(vorbis ${VORBIS_HEADERS} ${VORBIS_SOURCES})
-    add_library(vorbisenc ${VORBISENC_SOURCES})
+    #add_library(vorbisenc ${VORBISENC_SOURCES})
     add_library(vorbisfile ${VORBISFILE_SOURCES})
 
     add_library(Vorbis::vorbis ALIAS vorbis)
-    add_library(Vorbis::vorbisenc ALIAS vorbisenc)
+    #add_library(Vorbis::vorbisenc ALIAS vorbisenc)
     add_library(Vorbis::vorbisfile ALIAS vorbisfile)
 
     get_version_info(VORBIS_VERSION_INFO "V_LIB_CURRENT" "V_LIB_AGE" "V_LIB_REVISION")
     set_target_properties(vorbis PROPERTIES SOVERSION ${VORBIS_VERSION_INFO})
-    get_version_info(VORBISENC_VERSION_INFO "VE_LIB_CURRENT" "VE_LIB_AGE" "VE_LIB_REVISION")
-    set_target_properties(vorbisenc PROPERTIES SOVERSION ${VORBISENC_VERSION_INFO})
+    #get_version_info(VORBISENC_VERSION_INFO "VE_LIB_CURRENT" "VE_LIB_AGE" "VE_LIB_REVISION")
+    #set_target_properties(vorbisenc PROPERTIES SOVERSION ${VORBISENC_VERSION_INFO})
     get_version_info(VORBISFILE_VERSION_INFO "VF_LIB_CURRENT" "VF_LIB_AGE" "VF_LIB_REVISION")
     set_target_properties(vorbisfile PROPERTIES SOVERSION ${VORBISFILE_VERSION_INFO})
 
@@ -96,13 +96,13 @@ if (NOT BUILD_FRAMEWORK)
        PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}
     )
-    target_include_directories(vorbisenc
-        PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}
-    )
+    #target_include_directories(vorbisenc
+    #    PUBLIC
+    #        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    #        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    #    PRIVATE
+    #        ${CMAKE_CURRENT_SOURCE_DIR}
+    #)
     target_include_directories(vorbisfile
         PUBLIC
             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -113,12 +113,12 @@ if (NOT BUILD_FRAMEWORK)
         PUBLIC Ogg::ogg
         PRIVATE $<$<BOOL:${HAVE_LIBM}>:m>
     )
-    target_link_libraries(vorbisenc PUBLIC vorbis)
+    #target_link_libraries(vorbisenc PUBLIC vorbis)
     target_link_libraries(vorbisfile PUBLIC vorbis)
 
     install(FILES ${VORBIS_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_FULL_INCLUDEDIR}/vorbis)
 
-    install(TARGETS vorbis vorbisenc vorbisfile
+    install(TARGETS vorbis vorbisfile
         EXPORT VorbisTargets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
