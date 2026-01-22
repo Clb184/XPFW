@@ -62,6 +62,7 @@ set(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib/" )
 set(FT_DISABLE_HARFBUZZ ON)
 set(FT_REQUIRE_HARFBUZZ OFF)
 set(FT_DYNAMIC_HARFBUZZ OFF)
+set(GLFW_BUILD_SHARED_LIBRARY OFF)
 
 # Add necessary GLFW, ZLib and LibPNG
 add_subdirectory(deps/glfw)

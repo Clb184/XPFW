@@ -2,6 +2,10 @@
 #include "Output.h"
 #include <assert.h>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 window_state_t DefaultWindowState() {
 	window_state_t ret = { 0 };
 	ret.fullscreen = false;
@@ -28,7 +32,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	assert(0 != window_data);
 
 	// Start GLFW with Core OpenGL 4.6 support
-	if (0 == glfwInit()) return -1;
+	if (GLFW_FALSE == glfwInit()) return -1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -77,7 +81,9 @@ struct draw_info_t {
 void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_loop) {
 	// Show from icon, this could be done after loading everything
 	glfwIconifyWindow(window->window);
+#ifdef WIN32
 	_sleep(1000); // Just wait a bit for the "restore window" (kinda imitating some game over there)
+#endif
 	glfwShowWindow(window->window);
 	glfwRestoreWindow(window->window);
 
