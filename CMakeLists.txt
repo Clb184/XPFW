@@ -38,7 +38,7 @@ set(CMAKE_DEBUG_POSTFIX "d")
 # the CMAKE_DEBUG_POSTFIX variable can be "removed"
 string(REGEX REPLACE "([Rr][Ee][Ll][Ee][Aa][Ss][Ee])" "RELEASE" RELEASE_CFG ${CMAKE_BUILD_TYPE})
 
-set(CONFIG_DIR "")
+set(CONFIG_DIR "Debug/")
 if("RELEASE" STREQUAL ${RELEASE_CFG})
 set(CMAKE_DEBUG_POSTFIX "")
 set(CONFIG_DIR "Release/")
