@@ -44,7 +44,7 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 	// Load data for checking signature
 	if (false == LoadDataFromFile(png_title, (void**)&chardata, 0)) {
 		char buf[1024] = "";
-		sprintf(buf, "\"%s\" does not exist", name); 
+		sprintf(buf, "PNG image \"%s\" does not exist", name); 
 		LOG_ERROR(buf); 
 		return false;
 	}

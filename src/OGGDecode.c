@@ -16,7 +16,11 @@ bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data) {
        OggVorbis_File* vf = 0;
        vorbis_info* vi = 0;
 
-       if (!(fp = fopen(filename, "rb"))) return false;
+       if (!(fp = fopen(filename, "rb"))) {
+		sprintf(buf, "Vorbis file \"%s\" does not exist", filename);
+		LOG_ERROR(buf);
+		return false;
+       }
 
        if (0 == (vf = calloc(1, sizeof(OggVorbis_File)))) return false;
 
