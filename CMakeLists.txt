@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(XPFW LANGUAGES C CXX) 
 
@@ -13,7 +13,7 @@ set(CMAKE_C_STANDARD_REQUIRED 23)
 # https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
 
 message("Directory is ${CMAKE_CURRENT_SOURCE_DIR}")
-message("Make sure to have a copy of GLEW in the 'deps' folder, sorry that I can't just add it as a submodule, I do this because the repository is incomplete and to not be dependent on Internet connection")
+#message("Make sure to have a copy of GLEW in the 'deps' folder, sorry that I can't just add it as a submodule, I do this because the repository is incomplete and to not be dependent on Internet connection")
 
 # sal.h for DirectXMath
 if(MSVC)
@@ -39,9 +39,11 @@ set(CMAKE_DEBUG_POSTFIX "d")
 string(REGEX REPLACE "([Rr][Ee][Ll][Ee][Aa][Ss][Ee])" "RELEASE" RELEASE_CFG ${CMAKE_BUILD_TYPE})
 
 set(CONFIG_DIR "Debug/")
+set(IS_DEBUG TRUE)
 if("RELEASE" STREQUAL ${RELEASE_CFG})
 set(CMAKE_DEBUG_POSTFIX "")
 set(CONFIG_DIR "Release/")
+set(IS_DEBUG FALSE)
 endif()
 
 message("Debug postfix is: ${CMAKE_DEBUG_POSTFIX} for ${CMAKE_BUILD_TYPE}" )
@@ -54,11 +56,15 @@ set(PNG_TESTS OFF)
 set(PNG_TOOLS OFF)
 set(PNG_EXECUTABLES OFF)
 if(WIN32)
-set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/deps/zlib/${CONFIG_DIR}zs${CMAKE_DEBUG_POSTFIX}${CMAKE_STATIC_LIBRARY_SUFFIX}" )
+	if(IS_DEBUG)
+		set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/deps/zlib/Debug/zsd.lib" )
+	else()
+		set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/deps/zlib/Release/zs.lib" )
+	endif()
 message("Binary dir for ZLib should be ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib/")
 endif()
 set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib/" )
-set(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib/" )
+#set(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib/" )
 set(FT_DISABLE_HARFBUZZ ON)
 set(FT_REQUIRE_HARFBUZZ OFF)
 set(FT_DYNAMIC_HARFBUZZ OFF)
