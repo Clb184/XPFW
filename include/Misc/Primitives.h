@@ -47,7 +47,7 @@ extern "C" {
 
 		buffer_descriptor_t vbd = { (GLsizei)(num_vertex * sizeof(TLVertex2D)), pdata, usage };
 		GLuint vb = -1;
-		CreateBuffer(&vbd, &vb);
+		CreateBuffer(vbd, &vb);
 
 		GLuint va = -1;
 		glCreateVertexArrays(1, &va);
@@ -60,9 +60,9 @@ extern "C" {
 
 		buffer_info_t buffinfo = { vb, sizeof(TLVertex2D)};
 
-		CreateVertexAttribute(&TL2DAttributes[0], &buffinfo, &va);
-		CreateVertexAttribute(&TL2DAttributes[1], &buffinfo, &va);
-		CreateVertexAttribute(&TL2DAttributes[2], &buffinfo, &va);
+		CreateVertexAttribute(TL2DAttributes[0], buffinfo, &va);
+		CreateVertexAttribute(TL2DAttributes[1], buffinfo, &va);
+		CreateVertexAttribute(TL2DAttributes[2], buffinfo, &va);
 
 		*vbuffer = vb;
 		*vattribute = va;
@@ -107,7 +107,7 @@ extern "C" {
 
 		buffer_descriptor_t vbd = { (GLsizei)(num_vertex * sizeof(TLVertex3D)), pdata, usage};
 		GLuint vb = -1;
-		CreateBuffer(&vbd, &vb);
+		CreateBuffer(vbd, &vb);
 
 		GLuint va = -1;
 		glCreateVertexArrays(1, &va);
@@ -121,10 +121,10 @@ extern "C" {
 
 		buffer_info_t buffinfo = { vb, sizeof(TLVertex3D) };
 
-		CreateVertexAttribute(&TL3DAttributes[0], &buffinfo, &va);
-		CreateVertexAttribute(&TL3DAttributes[1], &buffinfo, &va);
-		CreateVertexAttribute(&TL3DAttributes[2], &buffinfo, &va);
-		CreateVertexAttribute(&TL3DAttributes[3], &buffinfo, &va);
+		CreateVertexAttribute(TL3DAttributes[0], buffinfo, &va);
+		CreateVertexAttribute(TL3DAttributes[1], buffinfo, &va);
+		CreateVertexAttribute(TL3DAttributes[2], buffinfo, &va);
+		CreateVertexAttribute(TL3DAttributes[3], buffinfo, &va);
 
 		*vbuffer = vb;
 		*vattribute = va;

@@ -3,16 +3,16 @@
 #include <assert.h>
 
 // Creates a buffer
-bool CreateBuffer(const buffer_descriptor_t* descriptor, GLuint* buffer_id) {
+bool CreateBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id) {
 	LOG_INFO("Creating Buffer");
-	assert(0 != descriptor);
+	//assert(0 != descriptor);
 	assert(0 != buffer_id);
 	GLERR;
 
 	GLuint buf = -1;
 	glCreateBuffers(1, &buf);
 	if (-1 == buf) return false;
-	glNamedBufferData(buf, descriptor->size, descriptor->data, descriptor->type);
+	glNamedBufferData(buf, descriptor.size, descriptor.data, descriptor.type);
 	*buffer_id = buf;
 
 	GL_ERROR_RETURN();
@@ -37,9 +37,9 @@ bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, i
 	return true;
 }
 
-bool CreateVertexAttribute(const attribute_info_t* attribute_data, const buffer_info_t* buffer_data, GLuint* vertex_array) {
-	assert(0 != attribute_data);
-	assert(0 != buffer_data);
+bool CreateVertexAttribute(const attribute_info_t attribute_data, const buffer_info_t buffer_data, GLuint* vertex_array) {
+	//assert(0 != attribute_data);
+	//assert(0 != buffer_data);
 	assert(0 != vertex_array);
 	assert(glIsVertexArray(*vertex_array));
 	GLERR;
@@ -50,14 +50,14 @@ bool CreateVertexAttribute(const attribute_info_t* attribute_data, const buffer_
 	// Direct State Access setup of Vertex Array Attribute
 
 	// Put attributes in its place
-	if (attribute_data->type == GL_INT || attribute_data->type == GL_UNSIGNED_INT)
-		glVertexArrayAttribIFormat(va, attribute_data->index, attribute_data->size, attribute_data->type, 0);
+	if (attribute_data.type == GL_INT || attribute_data.type == GL_UNSIGNED_INT)
+		glVertexArrayAttribIFormat(va, attribute_data.index, attribute_data.size, attribute_data.type, 0);
 	else
-		glVertexArrayAttribFormat(va, attribute_data->index, attribute_data->size, attribute_data->type, attribute_data->normalized, 0);
+		glVertexArrayAttribFormat(va, attribute_data.index, attribute_data.size, attribute_data.type, attribute_data.normalized, 0);
 
 	// And enable the attribute
-	glEnableVertexArrayAttrib(va, attribute_data->index);
-	glVertexArrayVertexBuffer(va, attribute_data->index, buffer_data->buffer, attribute_data->ptr, buffer_data->stride);
+	glEnableVertexArrayAttrib(va, attribute_data.index);
+	glVertexArrayVertexBuffer(va, attribute_data.index, buffer_data.buffer, attribute_data.ptr, buffer_data.stride);
 
 	// Is the same as the one above, but offsets are in different parts, however result is the same
 	// I'm using only DSA (Direct State Access, so I'm not going to do the following that I'll keep commented out)

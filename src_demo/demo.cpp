@@ -219,7 +219,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	draw_cmd.count = sizeof(mvert) / sizeof(TLVertex2D);
 
 	buffer_descriptor_t buf = { sizeof(draw_cmd_t), &draw_cmd, GL_DYNAMIC_DRAW };
-	CreateBuffer(&buf, &data->draw_buffer_cmd);
+	CreateBuffer(buf, &data->draw_buffer_cmd);
 
 
 	// Indexes
@@ -228,7 +228,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	memcpy(data->idxs, idxs, sizeof(data->idxs));
 
 	buffer_descriptor_t ibuffer_desc = { sizeof(idxs), idxs, GL_DYNAMIC_DRAW };
-	CreateBuffer(&ibuffer_desc, &data->ibuffer);
+	CreateBuffer(ibuffer_desc, &data->ibuffer);
 
 
 	// Normaldata
