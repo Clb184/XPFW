@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include <immintrin.h>
 
 // Includes for making DirectXMath work on Linux with no problems apparently
@@ -128,6 +128,13 @@ struct draw_cmd_t {
 	GLuint base = 0;
 };
 
+struct entity_t {
+	DirectX::XMFLOAT2 pos;
+	DirectX::XMFLOAT2 size;
+	DirectX::XMFLOAT2 scale;
+	float angle;
+};
+
 struct TestData {
 	// Camera data, obviously
 	CameraData cmdata;
@@ -140,6 +147,8 @@ struct TestData {
 	GLuint tex = 0xffffffff;
 	texture_metric_t mmetric;
 	GLuint mvbo, mvao;
+	entity_t entity;
+	float var_0;
 
 	GLuint vbuffer = -1, vattrib = -1;
 	
@@ -161,10 +170,34 @@ struct TestData {
 	font_descriptor_t font_desc;
 	font_t* font = nullptr;
 
+	uint64_t frames_passed;
+	uint64_t seconds_passed;
+
 };
+
+void SetTLV(TLVertex2D* vertex, float angle, const DirectX::XMFLOAT2 pos, const DirectX::XMFLOAT2 scale, const DirectX::XMFLOAT2 size) {
+	float hw = 0.5f * size.x * scale.x, hh = 0.5f * size.y * scale.y;
+	float s = sinf(angle), c = cosf(angle);
+
+	vertex[0].x = (c * -hw - s * -hh) + pos.x;
+	vertex[0].y = (s * -hw + c * -hh) + pos.y;
+
+	vertex[1].x = (c * -hw - s * hh) + pos.x;
+	vertex[1].y = (s * -hw + c * hh) + pos.y;
+
+	vertex[2].x = (c * hw - s * -hh) + pos.x;
+	vertex[2].y = (s * hw + c * -hh) + pos.y;
+
+	vertex[3].x = (c * hw - s * hh) + pos.x;
+	vertex[3].y = (s * hw + c * hh) + pos.y;
+}
 
 int InitializeAll(window_t* window, TestData* data) {
 	GLERR;
+	
+	data->var_0 = 0.0f;
+	data->frames_passed = 0;
+	data->seconds_passed = 0;
 
 	LoadShaderFromFile("Transform3D.vert", &data->vrt, GL_VERTEX_SHADER);
 	LoadShaderFromFile("Transform3D.frag", &data->frg, GL_FRAGMENT_SHADER);
@@ -176,13 +209,17 @@ int InitializeAll(window_t* window, TestData* data) {
 
 	//
 	TLVertex2D mvert[4] = {
-		{1280.0f, 720.0f - 90.0f, 1.0f, 0.0f, 0xffffffff},
-		{1280.0f, 720.0f, 1.0f, 1.0f, 0xffffffff},
-		{1280.0f - 160.0f, 720.0f - 90.0f, 0.0f, 0.0f, 0xffffffff},
-		{1280.0f - 160.0f, 720.0f, 0.0f, 1.0f, 0xffffffff},
+		{0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff},
+		{0.0f, 0.0f, 0.0f, 0.25f, 0xffffffff},
+		{0.0f, 0.0f, 0.25f, 0.0f, 0xffffffff},
+		{0.0f, 0.0f, 0.25f, 0.25f, 0xffffffff},
 	};
-	LoadTextureFromFile("misaka.png", &data->tex, &data->mmetric);
-	CreateTL2DVertexBuffer(4, mvert, GL_STATIC_DRAW, &data->mvbo, &data->mvao);
+	LoadTextureFromFile("meiling.png", &data->tex, &data->mmetric);
+	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
+	data->entity.pos = {120.0f, 120.0f};
+	data->entity.size = {64.0f, 64.0f};
+	data->entity.scale = {1.0f, 1.0f};
+	data->entity.angle = 0.0f;
 
 	//
 	TLVertex3D verts[] = {
@@ -281,6 +318,37 @@ int InitializeAll(window_t* window, TestData* data) {
 LOOP_FN(MoveLoop) {
 
 	TestData* dat = (TestData*)data;
+	dat->var_0 += 0.12f;
+
+	// Timeline
+	{
+		switch(dat->frames_passed) {
+			case 1:
+				dat->entity.pos = {120.0f, 120.0f};
+				break;
+			case 10:
+				dat->entity.angle = 0.123f;
+				break;
+			case 30:
+				dat->entity.scale = {1.15f, 1.15f};
+				dat->entity.angle = 0.14f;
+				break;
+			case 50:
+				dat->entity.scale = {0.95f, 0.95f};
+				dat->entity.angle = 0.135;
+				break;
+			case 60:
+				dat->entity.angle = 0.12f;
+				dat->frames_passed = 0;
+				break;
+		}
+	}
+
+	dat->frames_passed++;
+	if(!(dat->frames_passed % 60)) {
+		dat->seconds_passed++;
+	}
+
 	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, window->delta_time);
 }
 
@@ -314,11 +382,17 @@ LOOP_FN(DrawLoop) {
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, dat->draw_buffer_cmd);
 	GL_ERROR();
 
-	// Draw font atlas
+	// Draw textured
+	TLVertex2D* vertices = (TLVertex2D*)glMapNamedBuffer(dat->mvao, GL_WRITE_ONLY);
+	SetTLV(vertices, dat->entity.angle, dat->entity.pos, dat->entity.scale, dat->entity.size);
+	glUnmapNamedBuffer(dat->mvao);
 	glBindVertexArray(dat->mvao);
 	glBindTexture(GL_TEXTURE_2D, dat->tex);
+
 	glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 	GL_ERROR();
+
+	// Draw string
 	DrawString(dat->font, 0.0f, 0.0f,
 		"Finally, I compiled this thing with LLVM! Isn't that crazy?\n"
 		"There's still some other stuff I should try as well, me thinks",
@@ -329,6 +403,8 @@ LOOP_FN(DrawLoop) {
 	DrawString(dat->font, 0.0f, 616.0f, bf, 0xffffffff);
 	sprintf(bf, "%.2f fps", GetWindowFPS(window));
 	DrawString(dat->font, 0.0f, 640.0f, bf, 0xffffffff);
+	sprintf(bf, "%ld seconds passed", dat->seconds_passed);
+	DrawString(dat->font, 0.0, 664.0f, bf, 0xffffffff);
 }
 
 int main() {

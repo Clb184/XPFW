@@ -59,18 +59,6 @@ bool CreateVertexAttribute(const attribute_info_t attribute_data, const buffer_i
 	glEnableVertexArrayAttrib(va, attribute_data.index);
 	glVertexArrayVertexBuffer(va, attribute_data.index, buffer_data.buffer, attribute_data.ptr, buffer_data.stride);
 
-	// Is the same as the one above, but offsets are in different parts, however result is the same
-	// I'm using only DSA (Direct State Access, so I'm not going to do the following that I'll keep commented out)
-	/*
-	glBindVertexArray(va);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer_data->buffer);
-	if (attribute_data->type == GL_INT || attribute_data->type == GL_UNSIGNED_INT)
-		glVertexAttribIPointer(attribute_data->index, attribute_data->size, attribute_data->type, buffer_data->stride, (const void*)attribute_data->ptr);
-	else
-		glVertexAttribPointer(attribute_data->index, attribute_data->size, attribute_data->type, attribute_data->normalized, buffer_data->stride, (const void*)attribute_data->ptr);
-
-	glEnableVertexAttribArray(attribute_data->index);*/
-
 	GL_ERROR_RETURN();
 	return true;
 }
