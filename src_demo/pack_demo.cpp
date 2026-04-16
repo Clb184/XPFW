@@ -15,9 +15,13 @@ int main(int argc, char** argv) {
 	pack_file_t pack_file;	
 	if(0 == PackFileCreate(&pack_file)) {
 		for(int i = 1; i < argc; i++) {
-			PackFileAddEntryFromFile(&pack_file, argv[i]);
+			if(0 == PackFileAddEntryFromFile(&pack_file, argv[i])) {
+				printf("Entry \"%s\" added successfuly\n", argv[i]);
+			}
 		}
-		PackFileWrite(&pack_file, "test.dat");
+		if(0 == PackFileWrite(&pack_file, "test.dat")) {
+			printf("Packed file written successfuly\n");
+		}
 	}
 	return 0;
 }
