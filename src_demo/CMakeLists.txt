@@ -1,7 +1,5 @@
-file(GLOB demo_hpp *.hpp)
-file(GLOB demo_cpp *.cpp)
-
-add_executable(demo ${demo_cpp})
+# OpenGL test
+add_executable(demo demo.cpp)
 
 # Hot Reload for MSVC
 if (MSVC)
@@ -16,4 +14,21 @@ target_include_directories(demo
 )
 target_link_libraries(demo PUBLIC ${GLLIB_NAME} DirectXMath)
 set_target_properties(demo PROPERTIES DEBUGGER_WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY}/demo/)
+
+# Pack file test
+add_executable(pack_demo pack_demo.cpp)
+
+# Hot Reload for MSVC
+if (MSVC)
+	message("Enabling Hot Reload for MSVC")
+    target_link_options(pack_demo PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
+    target_compile_options(pack_demo PRIVATE $<$<CONFIG:Debug>:/ZI>)
+endif()
+target_include_directories(pack_demo
+	PUBLIC
+	${XPFW_ROOT}/include/
+	${XPFW_ROOT}/deps/glew/include/
+)
+target_link_libraries(pack_demo PUBLIC ${GLLIB_NAME} DirectXMath)
+set_target_properties(pack_demo PROPERTIES DEBUGGER_WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY}/demo/)
 message("Lib path: ${XPFW_ROOT}/include/")

@@ -15,7 +15,7 @@ extern "C" {
 typedef struct {
 	FILE* file;
 	size_t file_size;
-	pack_file_header_t pack_file_header;
+	pack_file_header_t header;
 } pack_file_t;
 
 // Pack file open, pass structure and it will be filled if a file can be opened
