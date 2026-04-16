@@ -4,5 +4,6 @@
 #include "OpenGL/OpenGL.h"
 #include "Misc/Primitives.h"
 #include "MiniAudio/Sound.h"
+#include "PackArchive/PackArchive.h"
 
 #endif
