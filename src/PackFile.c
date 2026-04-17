@@ -3,6 +3,19 @@
 #include "Output.h"
 #include <assert.h>
 
+voidpf ZMemAlloc(voidpf custom, uInt cnt, uInt size) {
+	char buf[512] = "";
+	sprintf(buf, "Allocating ZMem %d bytes", size * cnt);
+	LOG_INFO(buf);
+
+	void* data = calloc(cnt, size);
+	return data;
+}
+
+void ZMemFree(voidpf custom, voidpf data) {
+	LOG_INFO("Freeing ZMem");
+	free(data);
+}
 
 int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	char buf[1024];
@@ -52,20 +65,35 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 	
 
 	// Begin deflate
+	stream.zalloc = ZMemAlloc;
+	stream.zfree = ZMemFree;
 	if(Z_OK == deflateInit(&stream, -1)) {
 		LOG_INFO("Begin entry compression");
 		stream.data_type = Z_BINARY;
 		while(stream.total_in != size) {
-			stream.avail_in = fread(data, size, 1, src);
+			stream.avail_in = fread(data, 1, size, src);
 			stream.next_in = data;
+			for(int i = 0; i < 32; i++){
+				printf("%x ", data[i]);
+			}
+			printf("\n");
+			sprintf(buf, "Data read: %d", stream.avail_in);
+			LOG_INFO(buf);
+
 			while(0 < stream.avail_in) {
 				stream.avail_out = 128 * 1024;
 				stream.next_out = data_out;
-				deflate(&stream, Z_NO_FLUSH);
-				sprintf(buf, "Available out bytes after deflate: %lld", stream.avail_out);
-				LOG_INFO(buf);
+				if(Z_OK != deflate(&stream, Z_NO_FLUSH)) {
+					LOG_ERROR("Failed calling deflate()");
+				}
 
-				sprintf(buf, "Available in bytes after deflate: %lld", stream.avail_in);
+				sprintf(buf, "Available in bytes after deflate: %d", stream.avail_in);
+				LOG_INFO(buf);
+				sprintf(buf, "Available out bytes after deflate: %d", stream.avail_out);
+				LOG_INFO(buf);
+				sprintf(buf, "Total bytes in: %d", stream.total_in);
+				LOG_INFO(buf);
+				sprintf(buf, "Total bytes out: %d", stream.total_out);
 				LOG_INFO(buf);
 			}
 		}
