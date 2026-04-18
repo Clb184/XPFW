@@ -22,7 +22,6 @@ typedef struct {
 	uint32_t flags; // flags, 0x1 means compressed
 	uint64_t checksum;
 	uint64_t entry_count;
-	pack_file_entry_t* entries;	
 } pack_file_header_t;
 
 #ifdef __cplusplus
