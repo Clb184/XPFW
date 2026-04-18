@@ -34,6 +34,11 @@ int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, const char* f
 // Write a packed file 
 int PackFileWrite(pack_file_t* pack_file, const char* filename);
 
+// Retrieve data from entry
+int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, char** data, size_t* size);
+
+int PackFileFindEntry(pack_file_t* pack_file, const char* entry_name, pack_file_entry_t* out);
+
 #ifdef __cplusplus
 }
 #endif
