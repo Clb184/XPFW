@@ -9,6 +9,8 @@ extern "C" {
 // Entry for pack file header, is followed by name, output size, compressed size, maybe a checksum, and finally, data
 typedef struct {
 	char* name;
+	int loaded;
+	uint64_t offset;
 	uint64_t output_size;
 	uint64_t this_size;
 	uint64_t checksum;

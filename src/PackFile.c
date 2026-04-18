@@ -22,7 +22,52 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	char buf[1024];
 	sprintf(buf, "Opening packed file \"%s\"", filename);
 	LOG_INFO(buf);
+
 	FILE* file = 0;
+	size_t size = 0;
+
+	// Load all file info into memory, this will create offsets
+	// when "loaded" isn't 1, this means is a part of the pack file
+	// to load using the created offset
+	file = fopen(filename, "rb");
+       
+	if(0 == file) {
+		sprintf(buf, "Error opening pack file \"%s\"", filename);
+		LOG_ERROR(buf);
+		return -1;
+	}	
+
+	fseek(file, 0, SEEK_END);
+	size = ftell(file);
+	rewind(file);
+
+	// Check file
+	if(size >= sizeof(pack_file_header_t)) {
+		pack_file_header_t header;
+		fread(&header, sizeof(packed_file_header_t), 1, file);
+
+		// Check magic
+		if(header.magic[0] == 'C' && header.magic[1] == 'A' &&
+			header.magic[2] == 'F' && header.magic[3] == '0') {
+			sprintf(buf, "Found %d entries", entry.entry_count);
+		}
+		
+	}
+	else {
+		// Not a complete file or corresponding
+	}
+
+	return 0;
+}
+
+int PackFileClose(pack_file_t* pack_file) {
+	LOG_INFO("Closing packed file");
+	assert(0 != pack_file);
+
+	if(pack_file->file == 0) return 0;
+
+	fclose(pack_file->file);
+	pack_file->file = 0;
 	return 0;
 }
 
@@ -160,6 +205,7 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 					LOG_INFO("Decompression success");
 					pack_file_entry_t entry;
 					entry.name = filename;
+					entry.loaded = 1;
 					entry.output_size = size;
 					entry.this_size = buffer_out_size;
 					entry.checksum = 0;
@@ -209,7 +255,29 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 	}
 
 	fwrite(&pack_file->header, sizeof(pack_file_header_t), 1, output);
-	fwrite(pack_file->entries, sizeof(pack_file_entry_t), pack_file->entry_count, output);
+	for(size_t i = 0; i < pack_file->entry_count; i++) {
+		pack_file_entry_t* entry = pack_file->entries + i;
+		sprintf(
+			buf,
+			"%s : %d -> %d bytes", 
+			entry->name,
+		       	entry->output_size,
+			entry->this_size
+			);
+
+		LOG_INFO(buf);
+		fwrite(
+			entry->name,
+			strlen(entry->name),
+		       	1,
+		       	output
+			);
+		fputc(0x00, output);
+		fwrite(&entry->output_size, sizeof(uint64_t), 1, output);
+		fwrite(&entry->this_size, sizeof(uint64_t), 1, output);
+		fwrite(&entry->checksum, sizeof(uint64_t), 1, output);
+		fwrite(entry->data, sizeof(uint8_t), entry->this_size, output);
+	}
 	fclose(output);
 
 

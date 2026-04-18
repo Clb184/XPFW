@@ -24,6 +24,7 @@ typedef struct {
 // Pack file open, pass structure and it will be filled if a file can be opened
 // return 0 means success
 int PackFileOpen(pack_file_t* pack_file, const char* filename);
+int PackFileClose(pack_file_t* pack_file);
 
 // Create the pack file structure and prepare for writting
 int PackFileCreate(pack_file_t* pack_file);

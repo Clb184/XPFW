@@ -21,6 +21,9 @@ int main(int argc, char** argv) {
 		}
 		if(0 == PackFileWrite(&pack_file, "test.dat")) {
 			printf("Packed file written successfuly\n");
+			if(0 == PackFileOpen(&pack_file, "test.dat")){
+				printf("Packed file opened successfuly\n");
+			}
 		}
 	}
 	return 0;
