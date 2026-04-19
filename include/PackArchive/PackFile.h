@@ -14,6 +14,7 @@ extern "C" {
 
 typedef struct {
 	FILE* file;
+	int state; // 0 closed, 1 read, 2 write
 	size_t file_size;
 	size_t entry_count;
 	size_t entry_max;
