@@ -44,12 +44,12 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	// Check file
 	if(size >= sizeof(pack_file_header_t)) {
 		pack_file_header_t header;
-		fread(&header, sizeof(packed_file_header_t), 1, file);
+		fread(&header, sizeof(pack_file_header_t), 1, file);
 
 		// Check magic
 		if(header.magic[0] == 'C' && header.magic[1] == 'A' &&
 			header.magic[2] == 'F' && header.magic[3] == '0') {
-			sprintf(buf, "Found %d entries", entry.entry_count);
+			//sprintf(buf, "Found %d entries", entry.entry_count);
 		}
 		
 	}
@@ -74,10 +74,12 @@ int PackFileClose(pack_file_t* pack_file) {
 int PackFileCreate(pack_file_t* pack_file){
 	LOG_INFO("Creating packed file");
 	assert(0 != pack_file);
-	pack_file->file = 0;
+	pack_file->file = 2; // Get ready for write
+	pack_file->state = 0;
 	pack_file->file_size = 0;
 	pack_file->entry_count = 0;
 	pack_file->entry_max = 0;
+	pack_file->current_offset = 0;
 	pack_file->header.magic[0] = 'C';
 	pack_file->header.magic[1] = 'A';
 	pack_file->header.magic[2] = 'F';
@@ -200,16 +202,24 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 				}
 				printf("\n");
 
+				free(data);
 				printf("Decompressed total of %d bytes\n", stream.total_out);	
 				if(Z_OK == result && stream.total_out == size) {
 					LOG_INFO("Decompression success");
 					pack_file_entry_t entry;
 					entry.name = filename;
 					entry.loaded = 1;
+					entry.offset = pack_file->offset;
 					entry.output_size = size;
 					entry.this_size = buffer_out_size;
 					entry.checksum = 0;
 					entry.data = data_out;
+					
+
+					// Increment offset
+					pack_file->offset += buffer_out_size;
+
+					// Add entry to table
 					if(0 == PackFileDoAddEntry(pack_file, &entry)) {
 						LOG_INFO("Success on adding entry");
 					} else {
@@ -243,7 +253,7 @@ int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, const char* f
 
 int PackFileWrite(pack_file_t* pack_file, const char* filename){
 	char buf[1024];
-	sprintf(buf, "Writting packed file \"%s\"", filename);
+	sprintf(buf, "Writting packed file \"%s\" with %d entries", filename, pack_file->entry_count);
 	LOG_INFO(buf);
 	pack_file->header.entry_count = pack_file->entry_count;
 	FILE* output = 0;
@@ -273,11 +283,17 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 		       	output
 			);
 		fputc(0x00, output);
+		fwrite(&entry->offset, sizeof(uint64_t), 1, output);
 		fwrite(&entry->output_size, sizeof(uint64_t), 1, output);
 		fwrite(&entry->this_size, sizeof(uint64_t), 1, output);
 		fwrite(&entry->checksum, sizeof(uint64_t), 1, output);
+	}
+
+	for(size_t i = 0; i < pack_file->entry_count; i++) {
+		pack_file_entry_t* entry = pack_file->entries + i;
 		fwrite(entry->data, sizeof(uint8_t), entry->this_size, output);
 	}
+
 	fclose(output);
 
 

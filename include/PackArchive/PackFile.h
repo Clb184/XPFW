@@ -12,14 +12,17 @@ extern "C" {
 // Pass a pack_file_t struct to realize many operations like write a new packfile, open a packfile,
 // retrieve file from packfile, etc
 
+// When Creating a pack file, l
 typedef struct {
 	FILE* file;
 	int state; // 0 closed, 1 read, 2 write
 	size_t file_size;
 	size_t entry_count;
 	size_t entry_max;
+	uint64_t current_offset;
 	pack_file_header_t header;
 	pack_file_entry_t* entries;
+	uint8_t** file_data;
 } pack_file_t;
 
 // Pack file open, pass structure and it will be filled if a file can be opened
