@@ -22,7 +22,6 @@ typedef struct {
 	uint64_t current_offset;
 	pack_file_header_t header;
 	pack_file_entry_t* entries;
-	uint8_t** file_data;
 } pack_file_t;
 
 // Pack file open, pass structure and it will be filled if a file can be opened

@@ -42,14 +42,30 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	rewind(file);
 
 	// Check file
+	LOG_INFO("Checking packed file");
 	if(size >= sizeof(pack_file_header_t)) {
 		pack_file_header_t header;
 		fread(&header, sizeof(pack_file_header_t), 1, file);
-
+		
+		LOG_INFO("Checking magic");
 		// Check magic
 		if(header.magic[0] == 'C' && header.magic[1] == 'A' &&
 			header.magic[2] == 'F' && header.magic[3] == '0') {
-			//sprintf(buf, "Found %d entries", entry.entry_count);
+			sprintf(buf, "Found %d entries", header.entry_count);
+			LOG_INFO(buf);
+
+			// Start filling the entry table into memory
+
+			fclose(file);
+		}
+		else {
+			sprintf(buf, "Incorrect magic %c %c %c %c (Should be CAF0)", 
+					header.magic[0],
+					header.magic[1],
+					header.magic[2],
+					header.magic[3]
+					);
+			LOG_ERROR(buf);
 		}
 		
 	}
@@ -63,11 +79,26 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 int PackFileClose(pack_file_t* pack_file) {
 	LOG_INFO("Closing packed file");
 	assert(0 != pack_file);
+	
+	// Files are loaded into memory
+	for(uint64_t i = 0; i < pack_file->header.entry_count; i++) {
+		pack_file_entry_t* entry = pack_file->entries + i;
+		if(0 != entry->name) {
+			free(entry->name);
+			entry->name = 0;
+		}
+		if(0 != entry->data) {
+			free(entry->data);
+			entry->data = 0;
+		}
+	}
 
-	if(pack_file->file == 0) return 0;
+	if(pack_file->file == 0 && pack_file->state == 1) return 0;
+	else {
+		fclose(pack_file->file);
+		pack_file->file = 0;
+	}
 
-	fclose(pack_file->file);
-	pack_file->file = 0;
 	return 0;
 }
 
@@ -181,7 +212,7 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 				printf("Inflate test:\n");
 				
 				// Prepare full inflate
-				stream.avail_in = buffer_out_size;
+				stream.avail_in = compressed_size;
 				stream.next_in = data_out;
 				stream.avail_out = size;
 				stream.next_out = data;
@@ -206,18 +237,20 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 				printf("Decompressed total of %d bytes\n", stream.total_out);	
 				if(Z_OK == result && stream.total_out == size) {
 					LOG_INFO("Decompression success");
+
+					// Fill entry
 					pack_file_entry_t entry;
 					entry.name = filename;
 					entry.loaded = 1;
-					entry.offset = pack_file->offset;
+					entry.offset = pack_file->current_offset;
 					entry.output_size = size;
-					entry.this_size = buffer_out_size;
+					entry.this_size = compressed_size;
 					entry.checksum = 0;
 					entry.data = data_out;
 					
 
 					// Increment offset
-					pack_file->offset += buffer_out_size;
+					pack_file->current_offset += compressed_size;
 
 					// Add entry to table
 					if(0 == PackFileDoAddEntry(pack_file, &entry)) {
