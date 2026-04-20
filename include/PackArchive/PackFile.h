@@ -37,7 +37,7 @@ int PackFileCreate(pack_file_t* pack_file);
 int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename);
 
 // Add an entry by loading data from memory
-int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, const char* filename);
+int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, size_t size, const char* entry_name);
 
 // Write a packed file 
 int PackFileWrite(pack_file_t* pack_file, const char* filename);
