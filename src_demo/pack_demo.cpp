@@ -36,6 +36,9 @@ int main(int argc, char** argv) {
 					fclose(fp);
 					printf("Writting DAT file %s\n", buf);
 				}
+				char* data2 = nullptr;
+				size_t sz2 = 0;
+				PackFileLoadEntry(&pack_file, "null_data", (void**)&data2, &sz2);
 				if(0 == PackFileClose(&pack_file)) {
 					printf("Packed file closed successfuly\n");
 				}

@@ -198,14 +198,22 @@ int InitializeAll(window_t* window, TestData* data) {
 	data->var_0 = 0.0f;
 	data->frames_passed = 0;
 	data->seconds_passed = 0;
-
+	
 	LoadShaderFromFile("Transform3D.vert", &data->vrt, GL_VERTEX_SHADER);
 	LoadShaderFromFile("Transform3D.frag", &data->frg, GL_FRAGMENT_SHADER);
 	if (false == CreateShaderProgram(data->vrt, data->frg, &data->prg)) { LOG_ERROR("Failed creating 3D shader"); return -1; }
-
-	LoadShaderFromFile("T&L2D.vert", &data->vrt2, GL_VERTEX_SHADER);
-	LoadShaderFromFile("T&L2D.frag", &data->frg2, GL_FRAGMENT_SHADER);
+	
+	// Test pack file
+	pack_file_t pack_file;
+	PackFileOpen(&pack_file, "test.dat");
+	char* shader_src = 0;
+	size_t shader_src_sz = 0;
+	PackFileLoadEntry(&pack_file, "T&L2D.vert", (void**)&shader_src, &shader_src_sz);
+	LoadShaderFromMemory(shader_src, &data->vrt2, GL_VERTEX_SHADER);
+	PackFileLoadEntry(&pack_file, "T&L2D.frag", (void**)&shader_src, &shader_src_sz);
+	LoadShaderFromMemory(shader_src, &data->frg2, GL_FRAGMENT_SHADER);
 	if (false == CreateShaderProgram(data->vrt2, data->frg2, &data->prg2)) { LOG_ERROR("Failed creating 2D shader"); return -1; }
+	PackFileClose(&pack_file);
 
 	//
 	TLVertex2D mvert[4] = {
