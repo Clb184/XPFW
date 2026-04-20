@@ -316,6 +316,9 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 					// Increment offset
 					pack_file->current_offset += compressed_size;
 
+					sprintf(buf, "Went from %lld -> %lld", size, compressed_size);
+					LOG_INFO(buf);
+
 					// Add entry to table
 					if(0 == PackFileDoAddEntry(pack_file, &entry)) {
 						LOG_INFO("Success on adding entry");
@@ -644,7 +647,7 @@ int PackFileFindEntry(pack_file_t* pack_file, const char* entry_name) {
 }
 
 int PackFileFindAndGetEntry(pack_file_t* pack_file, const char* entry_name, pack_file_entry_t** entry) {
-	char buf[1024];
+	char buf[512];
 	sprintf(buf, "Getting entry \"%s\" data", entry_name);
 	LOG_INFO(buf);
 
@@ -676,20 +679,28 @@ int PackFileDoAddEntry(pack_file_t* pack_file, pack_file_entry_t* entry) {
 		}
 
 		find->data = entry->data;
+		find->this_size = entry->this_size;
+		find->output_size = entry->output_size;
 	} 
 	else {
 		if (pack_file->entry_max > 0 && pack_file->entry_count < pack_file->entry_max) {
 			pack_file->entries[pack_file->entry_count] = *entry;
+			sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[pack_file->entry_count].this_size);
+			LOG_INFO(buf);
 			pack_file->entry_count++;
 		} else if (pack_file->entry_max <= 0) {
 			pack_file->entries = calloc(4, sizeof(pack_file_entry_t));
 			pack_file->entry_max = 4;
 			pack_file->entry_count = 1;
 			pack_file->entries[0] = *entry;
+			sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[0].this_size);
+			LOG_INFO(buf);
 		} else if (pack_file->entry_count >= pack_file->entry_max) {
 			pack_file->entry_max *= 2;
-			pack_file->entries = realloc(pack_file->entries, sizeof(pack_file->entry_max));
+			pack_file->entries = realloc(pack_file->entries, sizeof(pack_file_entry_t) * pack_file->entry_max);
 			pack_file->entries[pack_file->entry_count] = *entry;
+			sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[pack_file->entry_count].this_size);
+			LOG_INFO(buf);
 			pack_file->entry_count++;
 		}
 	}
