@@ -26,9 +26,8 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	FILE* file = 0;
 	size_t size = 0;
 
-	// Load all file info into memory, this will create offsets
-	// when "loaded" isn't 1, this means is a part of the pack file
-	// to load using the created offset
+	// Load all file into memory, data will be compressed an joined when writting
+	// the pack file
 	file = fopen(filename, "rb");
        
 	if(0 == file) {
@@ -134,8 +133,14 @@ int PackFileClose(pack_file_t* pack_file) {
 			entry->data = 0;
 		}
 	}
+	
+	// Delete loaded entry table (The one loaded from file)
+	if(0 != pack_file->entry_table_data) {
+		free(pack_file->entry_table_data);
+		pack_file->entry_table_data = 0;
+	}
 
-	if(pack_file->file == 0 && pack_file->state == 1) return 0;
+	if(0 == pack_file->file && 1 == pack_file->state) return 0;
 	else {
 		fclose(pack_file->file);
 		pack_file->file = 0;
@@ -387,20 +392,35 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 	return 0;
 }
 
-int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name) {
+int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, uint8_t** data, size_t* size) {
 	char buf[1024];
 	sprintf(buf, "Loading packed file entry \"%s\"", entry_name);
 	LOG_INFO(buf);
 
+	assert(0 != pack_file);
+	assert(0 != data);
+	assert(0 != size);
+
 	z_stream stream;
 	int result = 0;
 	pack_file_entry_t* entry = 0;
-
-	if(0 == entry) {
+	uint8_t* data_in = 0;
+	
+	if(0 == PackFileFindAndGetEntry(pack_file, entry_name, &entry)) {
 		sprintf(buf, "Entry \"%s\" not found", entry_name);
 		LOG_ERROR(buf);
 		return -1;
 	}
+
+	if(0 != entry->data) {
+		*data = entry->data;
+		*size = entry->output_size;
+		return 0;
+	}
+
+	data = calloc(entry->this_size, 1);
+	fseek(pack_file->file, pack_file->header.entry_table_size + entry->offset, SEEK_SET);
+	fread(data_in, entry->this_size, 1, pack_file->file);
 
 	// Decompress data
 	stream.zalloc = ZMemAlloc;
@@ -414,10 +434,12 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name) {
 
 		// Prepare full inflate
 		stream.avail_in = entry->this_size;
-		stream.next_in = entry->data;
+		stream.next_in = data_in;
 		stream.avail_out = entry->output_size;
 		stream.next_out = data_out;
 		result = inflate(&stream, Z_FINISH);
+		
+		free(data_in);
 
 		if(Z_STREAM_END == result) {
 			LOG_INFO("Inflate passed");
@@ -437,6 +459,9 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name) {
 		printf("Decompressed total of %d bytes\n", stream.total_out);	
 		if(Z_OK == result && stream.total_out == entry->output_size) {
 			LOG_INFO("Decompression success");
+			entry->data = data_out;
+			*data = data_out;
+			*size = entry->output_size;
 		}
 		else {
 			sprintf(buf, "An error ocurred while finishing inflate: ID: %d MSG: %s",  result, stream.msg);
@@ -447,44 +472,71 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name) {
 	return 0;
 }
 
-int PackFileFindEntry(pack_file_t* pack_file, const char* entry_name, pack_file_entry_t** out) {
+int PackFileFindEntry(pack_file_t* pack_file, const char* entry_name) {
 	char buf[1024];
 	sprintf(buf, "Looking for file entry \"%s\"", entry_name);
 	LOG_INFO(buf);
 
-	assert(0 != out);
-	if(0 == out) {
-		return -1;
+	// Iterate and find same name
+	uint64_t entries = pack_file->header.entry_count;
+	for (int64_t i = 0; i < entries; i++) {
+		if(0 == (strcmp(entry_name, pack_file->entries[i].name))){
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int PackFileFindAndGetEntry(pack_file_t* pack_file, const char* entry_name, pack_file_entry_t** entry) {
+	char buf[1024];
+	sprintf(buf, "Getting entry \"%s\" data", entry_name);
+	LOG_INFO(buf);
+
+	assert(0 != entry);
+	if(0 == entry) {
+		return 0;
 	}
 	
 	// Iterate and find same name
 	uint64_t entries = pack_file->header.entry_count;
 	for (int64_t i = 0; i < entries; i++) {
 		if(0 == (strcmp(entry_name, pack_file->entries[i].name))){
-			*out = pack_file->entries + i;
-			return 0;
+			*entry = pack_file->entries + i;
+			return 1;
 		}
-	}
-
-	return -2;
+	}	
+	return 0;
 }
 
 int PackFileDoAddEntry(pack_file_t* pack_file, pack_file_entry_t* entry) {
+	char buf[512];
 	LOG_INFO("Adding entry to pack file");
+	pack_file_entry_t* find = 0;
+	if(1 == PackFileFindAndGetEntry(pack_file, entry->name, &find)) {
+		sprintf(buf, "Replacing data on entry \"%s\"", entry->name);
 
-	if (pack_file->entry_max > 0 && pack_file->entry_count < pack_file->entry_max) {
-		pack_file->entries[pack_file->entry_count] = *entry;
-		pack_file->entry_count++;
-	} else if (pack_file->entry_max <= 0) {
-		pack_file->entries = calloc(4, sizeof(pack_file_entry_t));
-		pack_file->entry_max = 4;
-		pack_file->entry_count = 1;
-		pack_file->entries[0] = *entry;
-	} else if (pack_file->entry_count >= pack_file->entry_max) {
-		pack_file->entry_max *= 2;
-		pack_file->entries = realloc(pack_file->entries, sizeof(pack_file->entry_max));
-		pack_file->entries[pack_file->entry_count] = *entry;
-		pack_file->entry_count++;
+		if(0 != find->data) {
+			free(find->data);
+		}
+
+		find->data = entry->data;
+	} 
+	else {
+		if (pack_file->entry_max > 0 && pack_file->entry_count < pack_file->entry_max) {
+			pack_file->entries[pack_file->entry_count] = *entry;
+			pack_file->entry_count++;
+		} else if (pack_file->entry_max <= 0) {
+			pack_file->entries = calloc(4, sizeof(pack_file_entry_t));
+			pack_file->entry_max = 4;
+			pack_file->entry_count = 1;
+			pack_file->entries[0] = *entry;
+		} else if (pack_file->entry_count >= pack_file->entry_max) {
+			pack_file->entry_max *= 2;
+			pack_file->entries = realloc(pack_file->entries, sizeof(pack_file->entry_max));
+			pack_file->entries[pack_file->entry_count] = *entry;
+			pack_file->entry_count++;
+		}
 	}
 
 	return 0;

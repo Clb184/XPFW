@@ -43,9 +43,13 @@ int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, const char* f
 int PackFileWrite(pack_file_t* pack_file, const char* filename);
 
 // Retrieve data from entry
-int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, char** data, size_t* size);
+int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, uint8_t** data, size_t* size);
 
-int PackFileFindEntry(pack_file_t* pack_file, const char* entry_name, pack_file_entry_t** out);
+int PackFileDeleteEntry(pack_file_t* pack_file, const char* entry_name);
+
+int PackFileFindEntry(pack_file_t* pack_file, const char* entry_name);
+
+int PackFileFindAndGetEntry(pack_file_t* pack_file, const char* entry_name, pack_file_entry_t** entry);
 
 int PackFileDoAddEntry(pack_file_t* pack_file, pack_file_entry_t* entry);
 #ifdef __cplusplus
