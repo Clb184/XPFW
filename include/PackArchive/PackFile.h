@@ -20,6 +20,7 @@ typedef struct {
 	size_t entry_count;
 	size_t entry_max;
 	uint64_t current_offset;
+	uint8_t* entry_table_data;
 	pack_file_header_t header;
 	pack_file_entry_t* entries;
 } pack_file_t;

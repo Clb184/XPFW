@@ -22,7 +22,6 @@ typedef struct {
 typedef struct {
 	char magic[4]; // CAF0
 	uint32_t flags; // flags, 0x1 means compressed
-	uint64_t checksum;
 	uint64_t entry_count;
 	uint64_t entry_table_size;
 } pack_file_header_t;

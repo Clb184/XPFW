@@ -53,13 +53,54 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 			header.magic[2] == 'F' && header.magic[3] == '0') {
 			sprintf(buf, "Found %d entries", header.entry_count);
 			LOG_INFO(buf);
+			
+			uint8_t* entry_table = 0;
+			pack_file->entries = calloc(sizeof(pack_file_entry_t), header.entry_count);
 
-			// Start filling the entry table into memory
+			if(0 == pack_file->entries) {
+				LOG_ERROR("Failed allocating memory for entry table");
+				fclose(file);
+				return -2;
+			}
 
+			entry_table = calloc(header.entry_table_size, 1);
+
+			if(0 == entry_table) {
+				LOG_ERROR("Failed allocating memory for entry table (expanded)");
+				fclose(file);
+				return -3;
+			}
+
+			// Read all expanded table
+			fread(entry_table, header.entry_table_size, 1, file);
 			fclose(file);
+
+			uint8_t* entry_table_data = entry_table;
+			pack_file->entry_table_data = entry_table_data;
+
+			// Start filling the entry table on memory
+			for(uint64_t i = 0; i < header.entry_count; i++){
+				size_t len = strlen(entry_table_data);
+				pack_file_entry_t* entry = pack_file->entries + i;
+
+				// Get a reference to the name
+				entry->name = entry_table_data;
+				entry_table_data += len + 1;
+
+				// Fill int64 entries
+				entry->offset = *(uint64_t*)entry_table_data;
+				entry_table_data += sizeof(uint64_t);
+				entry->output_size = *(uint64_t*)entry_table_data;
+				entry_table_data += sizeof(uint64_t);
+				entry->this_size = *(uint64_t*)entry_table_data;
+				entry_table_data += sizeof(uint64_t);
+				entry->checksum = *(uint64_t*)entry_table_data;
+				entry_table_data += sizeof(uint64_t);
+			}
+
 		}
 		else {
-			sprintf(buf, "Incorrect magic %c %c %c %c (Should be CAF0)", 
+			sprintf(buf, "Incorrect magic %c%c%c%c (Should be CAF0)", 
 					header.magic[0],
 					header.magic[1],
 					header.magic[2],
@@ -71,6 +112,7 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	}
 	else {
 		// Not a complete file or corresponding
+		LOG_ERROR("Not valid pack file");
 	}
 
 	return 0;
@@ -105,19 +147,22 @@ int PackFileClose(pack_file_t* pack_file) {
 int PackFileCreate(pack_file_t* pack_file){
 	LOG_INFO("Creating packed file");
 	assert(0 != pack_file);
+
+	// Initialize a new pack file
 	pack_file->file = 2; // Get ready for write
 	pack_file->state = 0;
 	pack_file->file_size = 0;
 	pack_file->entry_count = 0;
 	pack_file->entry_max = 0;
 	pack_file->current_offset = 0;
+	pack_file->entry_table_data = 0;
 	pack_file->header.magic[0] = 'C';
 	pack_file->header.magic[1] = 'A';
 	pack_file->header.magic[2] = 'F';
 	pack_file->header.magic[3] = '0';
 	pack_file->header.flags = 0;
-	pack_file->header.checksum = 0;
 	pack_file->header.entry_count = 0;
+	pack_file->header.entry_table_size = 0;
 	pack_file->entries = 0;
 	return 0;
 }
@@ -234,7 +279,8 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 				printf("\n");
 
 				free(data);
-				printf("Decompressed total of %d bytes\n", stream.total_out);	
+				sprintf(buf, "Decompressed total of %d bytes\n", stream.total_out);	
+				LOG_INFO(buf);
 				if(Z_OK == result && stream.total_out == size) {
 					LOG_INFO("Decompression success");
 
@@ -297,7 +343,15 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 		return -1;
 	}
 
+
+	// Calculate entry table size
+	for(size_t i = 0; i < pack_file->entry_count; i++) {
+		pack_file->header.entry_table_size += strlen(pack_file->entries[i].name) + 1 + sizeof(uint64_t) * 4;
+	}
+
 	fwrite(&pack_file->header, sizeof(pack_file_header_t), 1, output);
+
+	// Then write that table
 	for(size_t i = 0; i < pack_file->entry_count; i++) {
 		pack_file_entry_t* entry = pack_file->entries + i;
 		sprintf(
@@ -326,7 +380,7 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 		pack_file_entry_t* entry = pack_file->entries + i;
 		fwrite(entry->data, sizeof(uint8_t), entry->this_size, output);
 	}
-
+	LOG_INFO("Finished writting packed file");
 	fclose(output);
 
 
