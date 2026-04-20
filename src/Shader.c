@@ -4,7 +4,8 @@
 #include "IO.h"
 
 bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shader_type) {
-	LOG_INFO("Creating Shader (File)");
+	char buf[512];
+	sprintf(buf, "Loading Shader from file \"%s\"", file_name);
 	assert(0 != shader_unit);
 	GLERR;
 
@@ -30,7 +31,7 @@ bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shade
 }
 
 bool LoadShaderFromMemory(const char* src, GLuint* shader_unit, GLenum shader_type) {
-	LOG_INFO("Creating Shader (Memory)");
+	LOG_INFO("Loading Shader from memory");
 
 	assert(0 != src); 
 	assert(0 != shader_unit);
