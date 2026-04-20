@@ -19,6 +19,12 @@ bool LoadFontFromFile(FT_Library library, font_descriptor_t* font, const char* f
 	return FT_Err_Ok == FT_New_Face(library, font_name, 0, font);
 }
 
+bool LoadFontFromMemory(FT_Library library, font_descriptor_t* font, char* data, size_t size) {
+	LOG_INFO("Loading Font from file");
+	assert(0 != font);
+	return FT_Err_Ok == FT_New_Memory_Face(library, data, size, 0, font);
+}
+
 // Size is in pixels... But needs some adjustments...
 bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) {
 	LOG_INFO("Creating Font Atlas with size");

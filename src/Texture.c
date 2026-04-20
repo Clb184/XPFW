@@ -123,6 +123,80 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 	return true;
 }
 
+bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metrics) {
+	LOG_INFO("Loading texture from memory");
+	assert(0 != tex_unit);
+
+	// Check for PNG signature
+	if (0 == png_sig_cmp(data, 0, 16)) {
+		char buf[1024] = "";
+		sprintf(buf, "Opened PNG image from memory");
+		LOG_INFO(buf);
+	}
+	else {
+		char buf[1024] = "";
+		sprintf(buf, "Failed opening PNG image from memory, data is not valid");
+		LOG_ERROR(buf);
+		return false;
+	}
+
+	// Create the corresponding decoder and reader structs
+	png_structp png_reader = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
+	if (0 == png_reader) return 0;
+
+	png_infop png_info = png_create_info_struct(png_reader);
+	if (0 == png_info) {
+		png_destroy_read_struct(&png_reader, 0, 0);
+		return false;
+	}
+
+	// Create a fake file to load texture data from
+	virtual_file_t png_file = { data, (char*)data };
+	png_set_gamma(png_reader, PNG_DEFAULT_sRGB, PNG_DEFAULT_sRGB);
+	png_set_alpha_mode(png_reader, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
+	png_set_read_fn(png_reader, 0, LoadPNGFromMemory);
+	png_init_io(png_reader, (FILE*)&png_file);
+	png_read_info(png_reader, png_info);
+	unsigned int
+		width = png_get_image_width(png_reader, png_info),
+		height = png_get_image_height(png_reader, png_info),
+		channels = png_get_channels(png_reader, png_info);
+
+	// Allocate enough space for pixel data (RGBA 32 bits)
+	char* pixel_data = (char*)malloc(width * height * channels);
+	if (setjmp(png_jmpbuf(png_reader))) {
+		png_destroy_read_struct(&png_reader, &png_info, 0);
+		return false;
+	}
+	// Same for row pointers and set them
+	char** ppRows = (char**)malloc(sizeof(char*) * width);
+	for (int i = 0; i < height; i++) {
+		ppRows[i] = &pixel_data[channels * width * (i)];
+	}
+	png_set_rows(png_reader, png_info, (png_bytepp)ppRows);
+
+	// After setup, read all image and all data should be in place
+	png_read_image(png_reader, (png_bytepp)ppRows);
+	png_read_end(png_reader, png_info);
+
+	// Create the texture with all the retrieved pixel data
+	CreateTexture(tex_unit, width, height, pixel_data);
+
+	// And finally, release the decoder struct and free memory
+	png_destroy_read_struct(&png_reader, &png_info, 0);
+	free(pixel_data);
+	free(ppRows);
+
+	// Get these properties if requested
+	if (0 != metrics) {
+	       	metrics->width = width;
+		metrics->height = height;
+		metrics->texelw = 1.0f / (float)width;
+		metrics->texelh = 1.0f / (float)height;
+	}
+	return true;
+}
+
 bool CreateEmptyTexture(GLuint* tex_unit,int color) {
 	assert(0 != tex_unit);
 	int* pixels = calloc(256 * 256 * 4, 1); // Color is 32 bits

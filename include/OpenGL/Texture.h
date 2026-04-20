@@ -16,6 +16,9 @@ typedef struct {
 } texture_metric_t;
 
 bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* metric); // Simply loads a texture from file, optionally get the size of it via pointers
+
+bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metric); // Load the texture from memory
+
 bool CreateEmptyTexture(GLuint* tex_unit, int color); // Create a blank texture using a RGBA32 color per pixel
 
 #ifdef __cplusplus

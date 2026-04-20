@@ -33,6 +33,7 @@ bool InitializeFreeType(FT_Library* library); // Just a way to say "FT_Init_Libr
 bool UninitializeFreeType(FT_Library library);
 
 bool LoadFontFromFile(FT_Library library, font_descriptor_t* font, const char* file);
+bool LoadFontFromMemory(FT_Library library, font_descriptor_t* font, char* data, size_t size); // Same as above but loading data from memory
 bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size); // Size is in pixels for each Glyph (limit), but needs some adjustments...
 
 void DrawString(font_t* font, float x, float y, const char* string, uint32_t color);
