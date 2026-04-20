@@ -195,25 +195,27 @@ void SetTLV(TLVertex2D* vertex, float angle, const DirectX::XMFLOAT2 pos, const 
 int InitializeAll(window_t* window, TestData* data) {
 	GLERR;
 	
-	data->var_0 = 0.0f;
-	data->frames_passed = 0;
-	data->seconds_passed = 0;
-	
-	LoadShaderFromFile("Transform3D.vert", &data->vrt, GL_VERTEX_SHADER);
-	LoadShaderFromFile("Transform3D.frag", &data->frg, GL_FRAGMENT_SHADER);
-	if (false == CreateShaderProgram(data->vrt, data->frg, &data->prg)) { LOG_ERROR("Failed creating 3D shader"); return -1; }
-	
 	// Test pack file
 	pack_file_t pack_file;
 	PackFileOpen(&pack_file, "test.dat");
 	char* shader_src = 0;
 	size_t shader_src_sz = 0;
+
+	data->var_0 = 0.0f;
+	data->frames_passed = 0;
+	data->seconds_passed = 0;
+	
+	PackFileLoadEntry(&pack_file, "Transform3D.vert", (void**)&shader_src, &shader_src_sz);
+	LoadShaderFromMemory(shader_src, &data->vrt, GL_VERTEX_SHADER);
+	PackFileLoadEntry(&pack_file, "Transform3D.frag", (void**)&shader_src, &shader_src_sz);
+	LoadShaderFromMemory(shader_src, &data->frg, GL_FRAGMENT_SHADER);
+	if (false == CreateShaderProgram(data->vrt, data->frg, &data->prg)) { LOG_ERROR("Failed creating 3D shader"); return -1; }
+	
 	PackFileLoadEntry(&pack_file, "T&L2D.vert", (void**)&shader_src, &shader_src_sz);
 	LoadShaderFromMemory(shader_src, &data->vrt2, GL_VERTEX_SHADER);
 	PackFileLoadEntry(&pack_file, "T&L2D.frag", (void**)&shader_src, &shader_src_sz);
 	LoadShaderFromMemory(shader_src, &data->frg2, GL_FRAGMENT_SHADER);
 	if (false == CreateShaderProgram(data->vrt2, data->frg2, &data->prg2)) { LOG_ERROR("Failed creating 2D shader"); return -1; }
-	PackFileClose(&pack_file);
 
 	//
 	TLVertex2D mvert[4] = {
@@ -222,7 +224,10 @@ int InitializeAll(window_t* window, TestData* data) {
 		{0.0f, 0.0f, 0.25f, 0.0f, 0xffffffff},
 		{0.0f, 0.0f, 0.25f, 0.25f, 0xffffffff},
 	};
-	LoadTextureFromFile("meiling.png", &data->tex, &data->mmetric);
+	char* tex_dat = nullptr;
+	size_t tex_size = 0;
+	PackFileLoadEntry(&pack_file, "meiling.png", (void**)&tex_dat, &tex_size);
+	LoadTextureFromMemory(tex_dat, &data->tex, &data->mmetric);
 	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
 	data->entity.pos = {120.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
@@ -312,14 +317,18 @@ int InitializeAll(window_t* window, TestData* data) {
 	SetSamplerTextureMode(data->sampler, GL_NEAREST);
 	SetSamplerWrapMode(data->sampler, GL_REPEAT, GL_REPEAT);
 	glBindSampler(0, data->sampler);
-
+	
+	char* font_dat = nullptr;
+	size_t font_sz = 0;
+	PackFileLoadEntry(&pack_file, "PermanentMarker-Regular.ttf", (void**)&font_dat, &font_sz);
 	InitializeFreeType(&data->library);
-	LoadFontFromFile(data->library, &data->font_desc, "PermanentMarker-Regular.ttf");
+	LoadFontFromMemory(data->library, &data->font_desc, font_dat, font_sz);
 	data->font = new font_t;
 	CreateFontWithAtlas(data->font_desc, data->font, 20.0f);
 
 	glfwSetWindowUserPointer(window->window, &data->cmdata);
 	glfwSetKeyCallback(window->window, CameraKeyCallback);
+	PackFileClose(&pack_file);
 	return 0;
 }
 
