@@ -3,6 +3,7 @@ add_executable(demo demo.cpp)
 
 # Hot Reload for MSVC
 if (MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 	message("Enabling Hot Reload for MSVC")
     target_link_options(demo PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
     target_compile_options(demo PRIVATE $<$<CONFIG:Debug>:/ZI>)
@@ -20,6 +21,7 @@ add_executable(pack_demo pack_demo.cpp)
 
 # Hot Reload for MSVC
 if (MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 	message("Enabling Hot Reload for MSVC")
     target_link_options(pack_demo PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
     target_compile_options(pack_demo PRIVATE $<$<CONFIG:Debug>:/ZI>)

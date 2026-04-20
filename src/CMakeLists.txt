@@ -6,6 +6,7 @@ add_library(${GLLIB_NAME} STATIC ${lib_cpp})
 
 # Hot Reload for MSVC
 if (MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 	message("Enabling Hot Reload for MSVC")
     target_link_options(${GLLIB_NAME} PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
     target_compile_options(${GLLIB_NAME} PRIVATE $<$<CONFIG:Debug>:/ZI>)
