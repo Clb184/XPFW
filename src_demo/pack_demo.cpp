@@ -23,6 +23,22 @@ int main(int argc, char** argv) {
 			printf("Packed file written successfuly\n");
 			if(0 == PackFileOpen(&pack_file, "test.dat")){
 				printf("Packed file opened successfuly\n");
+				char buf[1024];
+				for(int i = 1; i < argc; i++){
+					char* data = nullptr;
+					size_t size = 0;
+
+					PackFileLoadEntry(&pack_file, argv[i], (void**)&data, &size);
+
+					sprintf(buf, "%s.dat", argv[i]);
+					FILE* fp = fopen(buf, "wb");
+					fwrite(data, size, 1, fp);
+					fclose(fp);
+					printf("Writting DAT file %s\n", buf);
+				}
+				if(0 == PackFileClose(&pack_file)) {
+					printf("Packed file closed successfuly\n");
+				}
 			}
 		}
 	}

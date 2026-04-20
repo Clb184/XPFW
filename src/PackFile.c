@@ -26,6 +26,8 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	FILE* file = 0;
 	size_t size = 0;
 
+	memset(pack_file, 0x00, sizeof(pack_file_t));
+
 	// Load all file into memory, data will be compressed an joined when writting
 	// the pack file
 	file = fopen(filename, "rb");
@@ -35,7 +37,7 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 		LOG_ERROR(buf);
 		return -1;
 	}	
-
+	
 	fseek(file, 0, SEEK_END);
 	size = ftell(file);
 	rewind(file);
@@ -72,12 +74,15 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 
 			// Read all expanded table
 			fread(entry_table, header.entry_table_size, 1, file);
-			fclose(file);
 
 			uint8_t* entry_table_data = entry_table;
+			pack_file->file = file;
 			pack_file->entry_table_data = entry_table_data;
+			pack_file->state = 1;
+			pack_file->header = header;
 
 			// Start filling the entry table on memory
+			LOG_INFO("Entry table has:");
 			for(uint64_t i = 0; i < header.entry_count; i++){
 				size_t len = strlen(entry_table_data);
 				pack_file_entry_t* entry = pack_file->entries + i;
@@ -95,6 +100,12 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 				entry_table_data += sizeof(uint64_t);
 				entry->checksum = *(uint64_t*)entry_table_data;
 				entry_table_data += sizeof(uint64_t);
+			}
+
+			for(uint64_t i = 0; i < header.entry_count; i++){
+				pack_file_entry_t* entry = pack_file->entries + i;
+				sprintf(buf, "Entry %s c %d u %d", entry->name, entry->this_size, entry->output_size);
+				LOG_INFO(buf);
 			}
 
 		}
@@ -122,12 +133,9 @@ int PackFileClose(pack_file_t* pack_file) {
 	assert(0 != pack_file);
 	
 	// Files are loaded into memory
+	LOG_INFO("Freeing entry data");
 	for(uint64_t i = 0; i < pack_file->header.entry_count; i++) {
 		pack_file_entry_t* entry = pack_file->entries + i;
-		if(0 != entry->name) {
-			free(entry->name);
-			entry->name = 0;
-		}
 		if(0 != entry->data) {
 			free(entry->data);
 			entry->data = 0;
@@ -136,12 +144,13 @@ int PackFileClose(pack_file_t* pack_file) {
 	
 	// Delete loaded entry table (The one loaded from file)
 	if(0 != pack_file->entry_table_data) {
+		LOG_INFO("Freeing entry table data");
 		free(pack_file->entry_table_data);
 		pack_file->entry_table_data = 0;
 	}
 
-	if(0 == pack_file->file && 1 == pack_file->state) return 0;
-	else {
+	if(0 != pack_file->file) {
+		LOG_INFO("Closing packed file");
 		fclose(pack_file->file);
 		pack_file->file = 0;
 	}
@@ -392,14 +401,19 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 	return 0;
 }
 
-int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, uint8_t** data, size_t* size) {
+int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, void** data, size_t* size) {
 	char buf[1024];
 	sprintf(buf, "Loading packed file entry \"%s\"", entry_name);
 	LOG_INFO(buf);
 
 	assert(0 != pack_file);
+	assert(0 != pack_file->file);
 	assert(0 != data);
 	assert(0 != size);
+
+	if(0 == data || 0 == size) {
+		return -1;
+	}
 
 	z_stream stream;
 	int result = 0;
@@ -409,7 +423,7 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, uint8_t** 
 	if(0 == PackFileFindAndGetEntry(pack_file, entry_name, &entry)) {
 		sprintf(buf, "Entry \"%s\" not found", entry_name);
 		LOG_ERROR(buf);
-		return -1;
+		return -2;
 	}
 
 	if(0 != entry->data) {
@@ -418,17 +432,20 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, uint8_t** 
 		return 0;
 	}
 
-	data = calloc(entry->this_size, 1);
-	fseek(pack_file->file, pack_file->header.entry_table_size + entry->offset, SEEK_SET);
+	LOG_INFO("Retrieving entry data from file");
+	data_in = calloc(entry->this_size, 1);
+	fseek(pack_file->file, sizeof(pack_file_header_t) + pack_file->header.entry_table_size + entry->offset, SEEK_SET);
 	fread(data_in, entry->this_size, 1, pack_file->file);
 
 	// Decompress data
+	LOG_INFO("Prepare for inflate");
+	stream.data_type = Z_BINARY;
 	stream.zalloc = ZMemAlloc;
 	stream.zfree = ZMemFree;
 	stream.avail_in = 0;
 	stream.next_in = 0;
 	if(Z_OK == inflateInit(&stream)) {
-		printf("Inflate data:\n");
+		LOG_INFO("Inflate data:\n");
 		
 		uint8_t* data_out = calloc(entry->output_size, 1);
 
@@ -445,14 +462,14 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, uint8_t** 
 			LOG_INFO("Inflate passed");
 		}
 		else {
-			sprintf(buf, "Inflate failed: ID %d", result);
+			sprintf(buf, "Inflate failed: ID %d MSG %s", result, stream.msg);
 			LOG_ERROR(buf);
 		}
 
 		result = inflateEnd(&stream);
 
 		for(int i = 0; i < 32; i++){
-			printf("%2x ", entry->data[i]);
+			printf("%2x ", ((uint8_t*)data_out)[i]);
 		}
 		printf("\n");
 
