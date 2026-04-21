@@ -5,16 +5,19 @@
 #include <string.h>
 
 voidpf ZMemAlloc(voidpf custom, uInt cnt, uInt size) {
+#ifdef ZMEM_LOG
 	char buf[512] = "";
 	sprintf(buf, "Allocating ZMem %d bytes", size * cnt);
 	LOG_INFO(buf);
-
+#endif
 	void* data = calloc(cnt, size);
 	return data;
 }
 
 void ZMemFree(voidpf custom, voidpf data) {
+#ifdef ZMEM_LOG
 	LOG_INFO("Freeing ZMem");
+#endif
 	free(data);
 }
 
@@ -54,6 +57,7 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 			header.magic[2] == 'F' && header.magic[3] == '0') {
 			sprintf(buf, "Found %d entries", header.entry_count);
 			LOG_INFO(buf);
+			pack_file->entry_count = header.entry_count;
 			
 			uint8_t* entry_table = 0;
 			pack_file->entries = calloc(sizeof(pack_file_entry_t), header.entry_count);
@@ -77,7 +81,6 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 
 			uint8_t* entry_table_data = entry_table;
 			pack_file->file = file;
-			pack_file->entry_table_data = entry_table_data;
 			pack_file->state = 1;
 			pack_file->header = header;
 
@@ -88,27 +91,25 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 				pack_file_entry_t* entry = pack_file->entries + i;
 
 				// Get a reference to the name
-				entry->name = entry_table_data;
+				entry->name = calloc(len + 1, 1);
+				memcpy(entry->name, entry_table_data, len);
 				entry_table_data += len + 1;
 
 				// Fill int64 entries
 				entry->offset = *(uint64_t*)entry_table_data;
-				*(uint64_t*)entry_table_data = 0;
 				entry_table_data += sizeof(uint64_t);
 				entry->output_size = *(uint64_t*)entry_table_data;
-				*(uint64_t*)entry_table_data = 0;
 				entry_table_data += sizeof(uint64_t);
 				entry->this_size = *(uint64_t*)entry_table_data;
-				*(uint64_t*)entry_table_data = 0;
 				entry_table_data += sizeof(uint64_t);
 				entry->checksum = *(uint64_t*)entry_table_data;
-				*(uint64_t*)entry_table_data = 0;
 				entry_table_data += sizeof(uint64_t);
 			}
 
+			free(entry_table);
 			for(uint64_t i = 0; i < header.entry_count; i++){
 				pack_file_entry_t* entry = pack_file->entries + i;
-				sprintf(buf, "Entry %s c %d u %d", entry->name, entry->this_size, entry->output_size);
+				sprintf(buf, "Entry \"%s\" c %d u %d", entry->name, entry->this_size, entry->output_size);
 				LOG_INFO(buf);
 			}
 
@@ -140,6 +141,10 @@ int PackFileClose(pack_file_t* pack_file) {
 	LOG_INFO("Freeing entry data");
 	for(uint64_t i = 0; i < pack_file->header.entry_count; i++) {
 		pack_file_entry_t* entry = pack_file->entries + i;
+		if(0 != entry->name) {
+			free(entry->name);
+			entry->name = 0;
+		}
 		if(0 != entry->data) {
 			free(entry->data);
 			entry->data = 0;
@@ -147,11 +152,6 @@ int PackFileClose(pack_file_t* pack_file) {
 	}
 	
 	// Delete loaded entry table (The one loaded from file)
-	if(0 != pack_file->entry_table_data) {
-		LOG_INFO("Freeing entry table data");
-		free(pack_file->entry_table_data);
-		pack_file->entry_table_data = 0;
-	}
 
 	if(0 != pack_file->file) {
 		LOG_INFO("Closing packed file");
@@ -173,7 +173,6 @@ int PackFileCreate(pack_file_t* pack_file){
 	pack_file->entry_count = 0;
 	pack_file->entry_max = 0;
 	pack_file->current_offset = 0;
-	pack_file->entry_table_data = 0;
 	pack_file->header.magic[0] = 'C';
 	pack_file->header.magic[1] = 'A';
 	pack_file->header.magic[2] = 'F';
@@ -225,10 +224,10 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 		stream.data_type = Z_BINARY;
 		stream.avail_in = size;
 		stream.next_in = data;
-		for(int i = 0; i < 32; i++){
-			printf("%2x ", data[i]);
-		}
-		printf("\n");
+		//for(int i = 0; i < 32; i++){
+		//	printf("%2x ", data[i]);
+		//}
+		//printf("\n");
 		sprintf(buf, "Stream available bytes: %d", stream.avail_in);
 		LOG_INFO(buf);
 
@@ -264,6 +263,31 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 		if(Z_OK == result) {
 			sprintf(buf, "Entry added successfuly, compressed to %lld bytes", compressed_size);
 			LOG_INFO(buf);
+			// Fill entry
+			pack_file_entry_t entry;
+			entry.name = calloc(strlen(filename) + 1, 1);
+			memcpy(entry.name, filename, strlen(filename));
+			entry.loaded = 1;
+			entry.offset = pack_file->current_offset;
+			entry.output_size = size;
+			entry.this_size = compressed_size;
+			entry.checksum = 0;
+			entry.data = data_out;
+					
+			free(data);
+			// Increment offset
+			pack_file->current_offset += compressed_size;
+
+			//sprintf(buf, "Went from %lld -> %lld", size, compressed_size);
+			//LOG_INFO(buf);
+
+			// Add entry to table
+			if(0 == PackFileDoAddEntry(pack_file, &entry)) {
+				LOG_INFO("Success on adding entry");
+			} else {
+				LOG_ERROR("Failed adding entry");
+			}
+			return 0;
 
 			// Decompress data to check integrity
 			stream.zalloc = ZMemAlloc;
@@ -272,7 +296,7 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 			stream.next_in = 0;
 			memset(data, 0, size);
 			if(Z_OK == inflateInit(&stream)) {
-				printf("Inflate test:\n");
+				LOG_INFO("Begin inflate test");
 				
 				// Prepare full inflate
 				stream.avail_in = compressed_size;
@@ -291,20 +315,21 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 
 				result = inflateEnd(&stream);
 
-				for(int i = 0; i < 32; i++){
-					printf("%2x ", data[i]);
-				}
-				printf("\n");
+				//for(int i = 0; i < 32; i++){
+				//	printf("%2x ", data[i]);
+				//}
+				//printf("\n");
 
 				free(data);
-				sprintf(buf, "Decompressed total of %d bytes\n", stream.total_out);	
+				sprintf(buf, "Decompressed total of %d bytes", stream.total_out);	
 				LOG_INFO(buf);
 				if(Z_OK == result && stream.total_out == size) {
 					LOG_INFO("Decompression success");
 
 					// Fill entry
 					pack_file_entry_t entry;
-					entry.name = filename;
+					entry.name = calloc(strlen(filename) + 1, 1);
+					memcpy(entry.name, filename, strlen(filename));
 					entry.loaded = 1;
 					entry.offset = pack_file->current_offset;
 					entry.output_size = size;
@@ -316,8 +341,8 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 					// Increment offset
 					pack_file->current_offset += compressed_size;
 
-					sprintf(buf, "Went from %lld -> %lld", size, compressed_size);
-					LOG_INFO(buf);
+					//sprintf(buf, "Went from %lld -> %lld", size, compressed_size);
+					//LOG_INFO(buf);
 
 					// Add entry to table
 					if(0 == PackFileDoAddEntry(pack_file, &entry)) {
@@ -417,7 +442,7 @@ int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, size_t size, 
 			stream.next_in = 0;
 			memset(data, 0, size);
 			if(Z_OK == inflateInit(&stream)) {
-				printf("Inflate test:\n");
+				LOG_INFO("Begin inflate test");
 				
 				// Prepare full inflate
 				stream.avail_in = compressed_size;
@@ -436,10 +461,10 @@ int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, size_t size, 
 
 				result = inflateEnd(&stream);
 
-				for(int i = 0; i < 32; i++){
-					printf("%2x ", data[i]);
-				}
-				printf("\n");
+				//for(int i = 0; i < 32; i++){
+				//	printf("%2x ", data[i]);
+				//}
+				//printf("\n");
 
 				sprintf(buf, "Decompressed total of %d bytes\n", stream.total_out);	
 				LOG_INFO(buf);
@@ -448,7 +473,8 @@ int PackFileAddEntryFromMemory(pack_file_t* pack_file, char* data, size_t size, 
 
 					// Fill entry
 					pack_file_entry_t entry;
-					entry.name = entry_name;
+					entry.name = calloc(strlen(entry_name) + 1, 1);
+					memcpy(entry.name, entry_name, strlen(entry_name));
 					entry.loaded = 1;
 					entry.offset = pack_file->current_offset;
 					entry.output_size = size;
@@ -490,6 +516,7 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 	LOG_INFO(buf);
 	pack_file->header.entry_count = pack_file->entry_count;
 	FILE* output = 0;
+	uint64_t offset = 0;
 
 	output = fopen(filename, "wb");
 	if(0 == output) {
@@ -524,10 +551,11 @@ int PackFileWrite(pack_file_t* pack_file, const char* filename){
 		       	output
 			);
 		fputc(0x00, output);
-		fwrite(&entry->offset, sizeof(uint64_t), 1, output);
+		fwrite(&offset, sizeof(uint64_t), 1, output);
 		fwrite(&entry->output_size, sizeof(uint64_t), 1, output);
 		fwrite(&entry->this_size, sizeof(uint64_t), 1, output);
 		fwrite(&entry->checksum, sizeof(uint64_t), 1, output);
+		offset += entry->this_size;
 	}
 
 	for(size_t i = 0; i < pack_file->entry_count; i++) {
@@ -578,14 +606,13 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, void** dat
 	fread(data_in, entry->this_size, 1, pack_file->file);
 
 	// Decompress data
-	LOG_INFO("Prepare for inflate");
 	stream.data_type = Z_BINARY;
 	stream.zalloc = ZMemAlloc;
 	stream.zfree = ZMemFree;
 	stream.avail_in = 0;
 	stream.next_in = 0;
 	if(Z_OK == inflateInit(&stream)) {
-		LOG_INFO("Inflate data:");
+		LOG_INFO("Inflating data");
 		
 		uint8_t* data_out = calloc(entry->output_size + 1, 1);
 
@@ -599,7 +626,7 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, void** dat
 		free(data_in);
 
 		if(Z_STREAM_END == result) {
-			LOG_INFO("Inflate passed");
+			LOG_INFO("Inflate success");
 		}
 		else {
 			sprintf(buf, "Inflate failed: ID %d MSG %s", result, stream.msg);
@@ -608,10 +635,10 @@ int PackFileLoadEntry(pack_file_t* pack_file, const char* entry_name, void** dat
 
 		result = inflateEnd(&stream);
 
-		for(int i = 0; i < 32; i++){
-			printf("%2x ", ((uint8_t*)data_out)[i]);
-		}
-		printf("\n");
+		//for(int i = 0; i < 32; i++){
+		//	printf("%2x ", ((uint8_t*)data_out)[i]);
+		//}
+		//printf("\n");
 
 		sprintf(buf, "Decompressed total of %d bytes", stream.total_out);	
 		LOG_INFO(buf);
@@ -657,7 +684,7 @@ int PackFileFindAndGetEntry(pack_file_t* pack_file, const char* entry_name, pack
 	}
 	
 	// Iterate and find same name
-	uint64_t entries = pack_file->header.entry_count;
+	uint64_t entries = pack_file->entry_count;
 	for (int64_t i = 0; i < entries; i++) {
 		if(0 == (strcmp(entry_name, pack_file->entries[i].name))){
 			*entry = pack_file->entries + i;
@@ -673,11 +700,12 @@ int PackFileDoAddEntry(pack_file_t* pack_file, pack_file_entry_t* entry) {
 	pack_file_entry_t* find = 0;
 	if(1 == PackFileFindAndGetEntry(pack_file, entry->name, &find)) {
 		sprintf(buf, "Replacing data on entry \"%s\"", entry->name);
+		LOG_INFO(buf);
 
 		if(0 != find->data) {
 			free(find->data);
 		}
-
+		free(entry->name);
 		find->data = entry->data;
 		find->this_size = entry->this_size;
 		find->output_size = entry->output_size;
@@ -685,22 +713,22 @@ int PackFileDoAddEntry(pack_file_t* pack_file, pack_file_entry_t* entry) {
 	else {
 		if (pack_file->entry_max > 0 && pack_file->entry_count < pack_file->entry_max) {
 			pack_file->entries[pack_file->entry_count] = *entry;
-			sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[pack_file->entry_count].this_size);
-			LOG_INFO(buf);
+			//sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[pack_file->entry_count].this_size);
+			//LOG_INFO(buf);
 			pack_file->entry_count++;
 		} else if (pack_file->entry_max <= 0) {
 			pack_file->entries = calloc(4, sizeof(pack_file_entry_t));
 			pack_file->entry_max = 4;
 			pack_file->entry_count = 1;
 			pack_file->entries[0] = *entry;
-			sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[0].this_size);
-			LOG_INFO(buf);
+			//sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[0].this_size);
+			//LOG_INFO(buf);
 		} else if (pack_file->entry_count >= pack_file->entry_max) {
 			pack_file->entry_max *= 2;
 			pack_file->entries = realloc(pack_file->entries, sizeof(pack_file_entry_t) * pack_file->entry_max);
 			pack_file->entries[pack_file->entry_count] = *entry;
-			sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[pack_file->entry_count].this_size);
-			LOG_INFO(buf);
+			//sprintf(buf, "Integrity: s %lld d %lld", entry->this_size, pack_file->entries[pack_file->entry_count].this_size);
+			//LOG_INFO(buf);
 			pack_file->entry_count++;
 		}
 	}
