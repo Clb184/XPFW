@@ -198,7 +198,11 @@ int PackFileAddEntryFromFile(pack_file_t* pack_file, const char* filename){
 	const int BUFFER_OUT_SIZE = 1024 * 1024;
 
 	src = fopen(filename, "rb");
-	if(0 == src) return -1; // Failed to open file
+	if(0 == src) {
+		sprintf(buf, "File \"%s\" not found", filename);
+		LOG_ERROR(buf);
+		return -1; // Failed to open file
+	}
 	
 	fseek(src, 0, SEEK_END);
 	size = ftell(src);
