@@ -52,6 +52,7 @@ void PackFilesWin32(int argc, char** argv) {
 	}
 	PackFileWrite(&pack_file, argv[1]);
 }
+#endif
 
 int main(int argc, char** argv) {
 	if(argc < 3) {
