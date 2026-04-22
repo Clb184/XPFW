@@ -410,11 +410,7 @@ LOOP_FN(DrawLoop) {
 	GL_ERROR();
 
 	// Draw string
-	DrawString(dat->font, 0.0f, 0.0f,
-		"Finally, I compiled this thing with LLVM! Isn't that crazy?\n"
-		"There's still some other stuff I should try as well, me thinks",
-		0xffffffff
-	);
+	DrawString(dat->font, 0.0f, 0.0f, "I'm just testing stuff for the lols", 0xffffffff);
 	char bf[24] = "";
 	sprintf(bf, "%.2f tps", GetWindowTPS(window));
 	DrawString(dat->font, 0.0f, 616.0f, bf, 0xffffffff);
