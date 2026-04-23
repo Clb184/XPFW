@@ -116,7 +116,7 @@ void MoveCamera(CameraData* camera_data, int mov_bits, float delta_time) {
 	// Update matrix
 	DirectX::XMVECTOR eye_pos = _mm_load_ps(camera_data->pos);
 	DirectX::XMMATRIX eye = DirectX::XMMatrixLookToLH(eye_pos, o, _mm_set_ps(0.0, 0.0f, 1.0f, 0.0f));
-	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 16.0f/9.0f, 0.1f, 1000.0f);
+	DirectX::XMMATRIX cam = DirectX::XMMatrixPerspectiveFovLH(3.14159f * 0.25f, 4.0f/3.0f, 0.1f, 1000.0f);
 	camera_data->cam_eye = eye * cam;
 
 }
@@ -133,6 +133,15 @@ struct entity_t {
 	DirectX::XMFLOAT2 size;
 	DirectX::XMFLOAT2 scale;
 	float angle;
+	int sprite_id;
+};
+
+struct sprite_t {
+	float x0;
+	float y0;
+	float x1;
+	float y1;
+	uint32_t color;
 };
 
 struct TestData {
@@ -170,6 +179,8 @@ struct TestData {
 	font_descriptor_t font_desc;
 	font_t* font = nullptr;
 
+	sprite_t sprites[16];
+
 	uint64_t frames_passed;
 	uint64_t seconds_passed;
 
@@ -190,6 +201,20 @@ void SetTLV(TLVertex2D* vertex, float angle, const DirectX::XMFLOAT2 pos, const 
 
 	vertex[3].x = (c * hw - s * hh) + pos.x;
 	vertex[3].y = (s * hw + c * hh) + pos.y;
+}
+
+void SetUV(TLVertex2D* vertex, float x0, float y0, float x1, float y1) {
+	vertex[0].u = x0;
+	vertex[0].v = y0;
+
+	vertex[1].u = x0;
+	vertex[1].v = (y0 + y1);
+
+	vertex[2].u = (x0 + x1);
+	vertex[2].v = y0;
+
+	vertex[3].u = (x0 + x1);
+	vertex[3].v = (y0 + y1);
 }
 
 int InitializeAll(window_t* window, TestData* data) {
@@ -226,13 +251,20 @@ int InitializeAll(window_t* window, TestData* data) {
 	};
 	char* tex_dat = nullptr;
 	size_t tex_size = 0;
-	PackFileLoadEntry(&pack_file, "meiling.png", (void**)&tex_dat, &tex_size);
-	LoadTextureFromMemory(tex_dat, &data->tex, &data->mmetric);
+	texture_metric_t metric;
+	PackFileLoadEntry(&pack_file, "grp/boss/boss11.png", (void**)&tex_dat, &tex_size);
+	LoadTextureFromMemory(tex_dat, &data->tex, &metric);
+	data->sprites[0] = {0.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[1] = {64.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[2] = {128.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[3] = {192.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+
 	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
 	data->entity.pos = {120.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
 	data->entity.scale = {1.0f, 1.0f};
 	data->entity.angle = 0.0f;
+	data->entity.sprite_id = 0;
 
 	//
 	TLVertex3D verts[] = {
@@ -255,7 +287,7 @@ int InitializeAll(window_t* window, TestData* data) {
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
-	DirectX::XMMATRIX prj = DirectX::XMMatrixOrthographicOffCenterLH(0.0, 1280.0, 720.0f, 0.0f, 1.0f, -1.0f);
+	DirectX::XMMATRIX prj = DirectX::XMMatrixOrthographicOffCenterLH(0.0, 640.0, 480.0f, 0.0f, 1.0f, -1.0f);
 
 	//
 	glUseProgram(data->prg2);
@@ -322,6 +354,8 @@ int InitializeAll(window_t* window, TestData* data) {
 	size_t pcm_size = 0;
 	PackFileLoadEntry(&pack_file, "bgm/02.ogg", (void**)&pcm_data, &pcm_size);
 	LoadSoundFromMemory(snd_control, 0, 1, pcm_data, pcm_size);
+	PackFileLoadEntry(&pack_file, "bgm/06.ogg", (void**)&pcm_data, &pcm_size);
+	LoadSoundFromMemory(snd_control, 1, 1, pcm_data, pcm_size);
 
 
 	char* font_dat = nullptr;
@@ -335,6 +369,9 @@ int InitializeAll(window_t* window, TestData* data) {
 	glfwSetWindowUserPointer(window->window, &data->cmdata);
 	glfwSetKeyCallback(window->window, CameraKeyCallback);
 	PackFileClose(&pack_file);
+
+
+
 	return 0;
 }
 
@@ -347,21 +384,18 @@ LOOP_FN(MoveLoop) {
 	{
 		switch(dat->frames_passed) {
 			case 1:
-				dat->entity.pos = {120.0f, 120.0f};
+				dat->entity.sprite_id = 0;
 				break;
-			case 10:
-				dat->entity.angle = 0.123f;
+			case 9:
+				dat->entity.sprite_id = 1;
 				break;
-			case 30:
-				dat->entity.scale = {1.15f, 1.15f};
-				dat->entity.angle = 0.14f;
+			case 17:
+				dat->entity.sprite_id = 2;
 				break;
-			case 50:
-				dat->entity.scale = {0.95f, 0.95f};
-				dat->entity.angle = 0.135;
+			case 25:
+				dat->entity.sprite_id = 3;
 				break;
-			case 60:
-				dat->entity.angle = 0.12f;
+			case 33:
 				dat->frames_passed = 0;
 				break;
 		}
@@ -407,7 +441,9 @@ LOOP_FN(DrawLoop) {
 
 	// Draw textured
 	TLVertex2D* vertices = (TLVertex2D*)glMapNamedBuffer(dat->mvao, GL_WRITE_ONLY);
+	sprite_t* current_spt = dat->sprites + dat->entity.sprite_id;
 	SetTLV(vertices, dat->entity.angle, dat->entity.pos, dat->entity.scale, dat->entity.size);
+	SetUV(vertices, current_spt->x0, current_spt->y0, current_spt->x1, current_spt->y1);
 	glUnmapNamedBuffer(dat->mvao);
 	glBindVertexArray(dat->mvao);
 	glBindTexture(GL_TEXTURE_2D, dat->tex);
@@ -419,11 +455,11 @@ LOOP_FN(DrawLoop) {
 	DrawString(dat->font, 0.0f, 0.0f, "I'm just testing stuff for the lols", 0xffffffff);
 	char bf[24] = "";
 	sprintf(bf, "%.2f tps", GetWindowTPS(window));
-	DrawString(dat->font, 0.0f, 616.0f, bf, 0xffffffff);
+	DrawString(dat->font, 0.0f, 400.0f, bf, 0xffffffff);
 	sprintf(bf, "%.2f fps", GetWindowFPS(window));
-	DrawString(dat->font, 0.0f, 640.0f, bf, 0xffffffff);
+	DrawString(dat->font, 0.0f, 424.0f, bf, 0xffffffff);
 	sprintf(bf, "%ld seconds passed", dat->seconds_passed);
-	DrawString(dat->font, 0.0, 664.0f, bf, 0xffffffff);
+	DrawString(dat->font, 0.0, 448.0f, bf, 0xffffffff);
 }
 
 int main() {
@@ -431,14 +467,13 @@ int main() {
 	InitializeSoundControl(snd_control, 3);
 
 	// We only play Vorbis files now
-	LoadSoundFromFile(snd_control, 1, 1, "bgm/02.ogg");
 
 	// Create window and run main loop
 	window_t window_data;
-	TestData data;
-	CreateGLWindow("OpenGL 4.6", 1280, 720, false, &window_data);
-	InitializeAll(&window_data, &data);
-	RunMainLoop(&window_data, &data, MoveLoop, DrawLoop);
+	TestData* data = new TestData;
+	CreateGLWindow("OpenGL 4.6", 1280, 960, false, &window_data);
+	InitializeAll(&window_data, data);
+	RunMainLoop(&window_data, data, MoveLoop, DrawLoop);
 
 	DestroySoundControl(snd_control);
 }
