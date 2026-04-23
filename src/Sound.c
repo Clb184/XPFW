@@ -47,7 +47,7 @@ void SetSoundMasterVolume(sound_control_t* sound_control, float level) {
 	ma_device_set_master_volume(&sound_control->device, level);
 }
 
-bool CreateSoundBuffer(sound_control_t* sound_control, int index, int cnt, const char* filename) {
+bool LoadSoundFromFile(sound_control_t* sound_control, int index, int cnt, const char* filename) {
 	char buf[256] = "";
 	sprintf(buf, "Creating Sound Buffer (%d) for \"%s\" x%d", index, filename, cnt);
 	LOG_INFO(buf);
@@ -60,6 +60,35 @@ bool CreateSoundBuffer(sound_control_t* sound_control, int index, int cnt, const
 	// Load vorbis data and copy to a buffer we'll use
 	vorbis_data_t vorbis;
 	if (false == LoadVorbisFile(filename, &vorbis)) return false;
+	cfg = ma_audio_buffer_config_init(ma_format_s16, vorbis.channels, vorbis.sample_count, vorbis.sample_data, 0);
+
+	sound_buffer_t* sound_buffer = &sound_control->sounds.sound_buffers[index];
+
+	sound_buffer->cnt = cnt;
+	sound_buffer->data = vorbis.sample_data;
+	sound_buffer->buffers = calloc(cnt, sizeof(audio_buffer_t));
+	sound_buffer->channels = vorbis.channels;
+
+	if (0 == sound_buffer->buffers) return false;
+
+	for (int i = 0; i < cnt; i++) {
+		res = ma_audio_buffer_init(&cfg, &sound_buffer->buffers[i].buffer_info);
+	}
+}
+
+bool LoadSoundFromMemory(sound_control_t* sound_control, int index, int cnt, char* data, size_t size) {
+	char buf[256] = "";
+	sprintf(buf, "Creating Sound Buffer (%d) from memory data x%d", index, cnt);
+	LOG_INFO(buf);
+	assert(0 != sound_control);
+	assert(sound_control->sounds.cnt > index);
+
+	ma_result res;
+	ma_audio_buffer_config cfg;
+
+	// Load vorbis data and copy to a buffer we'll use
+	vorbis_data_t vorbis;
+	if (false == LoadVorbisFromMemory(data, size, &vorbis)) return false;
 	cfg = ma_audio_buffer_config_init(ma_format_s16, vorbis.channels, vorbis.sample_count, vorbis.sample_data, 0);
 
 	sound_buffer_t* sound_buffer = &sound_control->sounds.sound_buffers[index];

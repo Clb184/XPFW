@@ -42,7 +42,8 @@ void DestroySoundControl(sound_control_t* sound_control);
 void SetSoundMasterVolume(sound_control_t* sound_control, float level);
 
 // Create n buffers to play sound
-bool CreateSoundBuffer(sound_control_t* sound_control, int index, int cnt, const char* filename);
+bool LoadSoundFromFile(sound_control_t* sound_control, int index, int cnt, const char* filename);
+bool LoadSoundFromMemory(sound_control_t* sound_control, int index, int cnt, char* data, size_t size);
 void DestroySoundBuffer(sound_control_t* sound_control, int index);
 
 // Play in normal mode or using x position as reference

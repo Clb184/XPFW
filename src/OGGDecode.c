@@ -5,6 +5,41 @@
 #include <assert.h>
 #include <string.h>
 
+typedef struct {
+	char* source_data;
+	char* move_data;
+	size_t offset;	
+} vorbis_mem_t;
+
+size_t ReadVorbisData(void* data, size_t size, size_t nmemb, void* source) {
+	printf("data: %p size: %lld nmemb: %lld source: %p\n", data, size, nmemb, source);
+	vorbis_mem_t* vm = (vorbis_mem_t*source)
+#ifdef _MSC_VER
+#pragma message("Adding debug break (MSVC)")
+	__debugbreak();
+#endif
+
+	return 0;
+}
+
+int SeekVorbisData(void* source, ogg_int64_t offset, int whence) {
+	printf("source: %p offset: %I64d whence: %d\n", source, offset, whence);
+#ifdef _MSC_VER
+#pragma message("Adding debug break (MSVC)")
+	__debugbreak();
+#endif
+	return 0;
+}
+
+long TellVorbisPos(void* source) {
+	printf("source:%p\n", source);
+#ifdef _MSC_VER
+#pragma message("Adding debug break (MSVC)")
+	__debugbreak();
+#endif
+	return 0;
+}
+
 bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data) {
 	char buf[256] = "";
 	sprintf(buf, "Loading Vorbis file \"%s\"", filename);
@@ -15,20 +50,28 @@ bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data) {
        FILE* fp = 0;
        OggVorbis_File* vf = 0;
        vorbis_info* vi = 0;
+	
+       if (0 == (vf = calloc(1, sizeof(OggVorbis_File)))) return false;
 
-       if (!(fp = fopen(filename, "rb"))) {
-		sprintf(buf, "Vorbis file \"%s\" does not exist", filename);
+       if(0 != ov_fopen(filename, vf)) {
+		sprintf(buf, "Vorbis file \"%s\" failed to initialize", filename);
 		LOG_ERROR(buf);
+		free(vf);
 		return false;
        }
 
-       if (0 == (vf = calloc(1, sizeof(OggVorbis_File)))) return false;
+       /*if (!(fp = fopen(filename, "rb"))) {
+		sprintf(buf, "Vorbis file \"%s\" does not exist", filename);
+		LOG_ERROR(buf);
+		return false;
+       }*/
 
-       if ((ov_open_callbacks(fp, vf, NULL, 0, OV_CALLBACKS_NOCLOSE) < 0)) {
+       LOG_INFO("Testing file");
+       /*if ((ov_open_callbacks(fp, vf, NULL, 0, OV_CALLBACKS_NOCLOSE) < 0)) {
            printf("Invalid OGG file.\n");
            free(vf);
            return false;
-       }
+       }*/
 
        vi = ov_info(vf, -1);
        int64_t sample_count = ov_pcm_total(vf, -1);
@@ -63,7 +106,66 @@ bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data) {
        free(vf);
        return true;
 }
+bool LoadVorbisFromMemory(char* data, size_t size, vorbis_data_t* vorbis_data) {
+	char buf[256] = "";
+	int result = 0;
+	LOG_INFO("Loading Vorbis data from memory");
+	assert(0 != vorbis_data);
+	ov_callbacks data_read = { 0 };
+	data_read.read_func = ReadVorbisData;
+	data_read.seek_func = SeekVorbisData;
+	data_read.tell_func = TellVorbisPos;
 
+       // Decode all the data with this simple function
+       OggVorbis_File* vf = 0;
+       vorbis_info* vi = 0;
+	
+       if (0 == (vf = calloc(1, sizeof(OggVorbis_File)))) return false;
+
+       LOG_INFO("Testing file");
+       printf("data: %p vf: %p\n", data, vf);
+       result = ov_open_callbacks(data, vf, data, size, data_read);
+       if (result < 0) {
+           sprintf(buf, "Invalid OGG data ID: %d", result);
+           free(vf);
+           return false;
+       }
+
+       LOG_INFO("Getting vorbis file info");
+       vi = ov_info(vf, -1);
+       int64_t sample_count = ov_pcm_total(vf, -1);
+       int channels = vi->channels;
+       sprintf(buf, "Samples: %I64d Channels: %d", sample_count, channels);
+       LOG_INFO(buf);
+
+	LOG_INFO("Allocating sample data");       
+        int16_t* samples = calloc(sizeof(int16_t), sample_count * channels);
+
+       if (0 == samples) {
+           ov_clear(vf);
+           free(vf);
+           return false;
+       }
+
+       // Read until filling all the buffer
+       int bitstr = 0;
+       long ret = 0;
+       char* seek = (char*)samples;
+	printf("seek: %p\n", seek);
+       do {
+           ret = ov_read(vf, seek, 4096, 0, channels, 1, &bitstr);
+           seek += ret;
+       } while (ret);
+
+       // Save info and release the file
+       vorbis_data->sample_count = sample_count;
+       vorbis_data->sample_data = samples;
+       vorbis_data->channels = channels;
+       vorbis_data->frequency = vi->rate;
+       ov_clear(vf);
+       free(vf);
+       return true;
+}
 void ReleaseVorbisData(vorbis_data_t* vorbis_data) {
        LOG_INFO("Releasing Vorbis data");
        assert(0 != vorbis_data);

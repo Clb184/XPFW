@@ -28,6 +28,7 @@ typedef struct {
 } vorbis_stream_t;
 
 bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data);
+bool LoadVorbisFromMemory(char* data, size_t size, vorbis_data_t* vorbis_data);
 void ReleaseVorbisData(vorbis_data_t* vorbis_data);
 
 bool BeginVorbisStream(const char* filename, vorbis_stream_t* vorbis_stream);

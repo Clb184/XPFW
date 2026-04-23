@@ -318,6 +318,12 @@ int InitializeAll(window_t* window, TestData* data) {
 	SetSamplerWrapMode(data->sampler, GL_REPEAT, GL_REPEAT);
 	glBindSampler(0, data->sampler);
 	
+	char* pcm_data = nullptr;
+	size_t pcm_size = 0;
+	PackFileLoadEntry(&pack_file, "bgm/02.ogg", (void**)&pcm_data, &pcm_size);
+	LoadSoundFromMemory(snd_control, 0, 1, pcm_data, pcm_size);
+
+
 	char* font_dat = nullptr;
 	size_t font_sz = 0;
 	PackFileLoadEntry(&pack_file, "PermanentMarker-Regular.ttf", (void**)&font_dat, &font_sz);
@@ -425,8 +431,7 @@ int main() {
 	InitializeSoundControl(snd_control, 3);
 
 	// We only play Vorbis files now
-	CreateSoundBuffer(snd_control, 0, 1, "exboss_2.ogg");
-	CreateSoundBuffer(snd_control, 1, 4, "ChargeSE.ogg");
+	LoadSoundFromFile(snd_control, 1, 1, "bgm/02.ogg");
 
 	// Create window and run main loop
 	window_t window_data;
