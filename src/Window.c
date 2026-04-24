@@ -28,7 +28,9 @@ bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, w
 }
 
 bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
-	LOG_INFO("Creating Window with OpenGL 4.6 support with GLFW");
+	char buf[512];
+	sprintf(buf, "Creating Window with OpenGL 4.6 support with GLFW (%d x %d) (%s)", state.width, state.height, state.fullscreen ? "Fullscreen" : "Windowed");
+	LOG_INFO(buf);
 	assert(0 != window_data);
 
 	// Start GLFW with Core OpenGL 4.6 support
@@ -43,16 +45,27 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 
 	GLFWwindow* win = glfwCreateWindow(state.width, state.height, state.title, state.fullscreen ? glfwGetPrimaryMonitor() : 0, 0);
 	if (0 == win) { LOG_ERROR("Failed creating GLFW window"); return false; }
+
+
 	glfwMakeContextCurrent(win);
 	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 	// Initialize GLEW
+	LOG_INFO("Initializing GLEW");
 #ifdef WIN32
 	if (GLEW_OK != glewInit()) { LOG_ERROR("Failed initializing GLEW"); return false; }
 #elif defined linux
 	// Linux is weird here, so don't check it
 	glewInit();
 #endif
+	sprintf(buf, "Vendor: %s", glGetString(GL_VENDOR));
+	LOG_INFO(buf);
+	sprintf(buf, "GPU: %s", glGetString(GL_RENDERER));
+	LOG_INFO(buf);
+	sprintf(buf, "OpenGL Version: %s", glGetString(GL_VERSION));
+	LOG_INFO(buf);
+	sprintf(buf, "GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	LOG_INFO(buf);
 
 	window_data->window_state = state;
 	window_data->window = win;
