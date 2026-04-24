@@ -208,14 +208,31 @@ bool CreateEmptyTexture(GLuint* tex_unit,int color) {
 
 bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, GLsizei height) {
 	char buf[512];
+	GLERR;
 	sprintf(buf, "Creating render texture %lld, %lld", width, height);
 	LOG_INFO(buf);
 	assert(0 != tex_unit);
+	assert(0 != framebuffer);
 
 	GLuint render_tex = -1;
+	GLuint framebuff = -1;
 	glCreateTextures(GL_TEXTURE_2D, 1, &render_tex);
+	GL_ERROR();
 	glTextureStorage2D(render_tex, 1, GL_RGBA32F, width, height);
-	glTextureSubImage2D(render_tex, 0, 0, 0, width, height, GL_RGBA)
+	GL_ERROR();
+	glTextureSubImage2D(render_tex, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	GL_ERROR();
+
+	glCreateFramebuffers(1, &framebuff);
+	GL_ERROR();
+	glNamedFramebufferTexture(framebuff, GL_COLOR_ATTACHMENT0, render_tex, 0);
+	GL_ERROR();
+	if(GL_FRAMEBUFFER_COMPLETE != glCheckNamedFramebufferStatus(framebuff, GL_FRAMEBUFFER)) {
+		return false;
+	}
 	
+	*tex_unit = render_tex;
+	*framebuffer = framebuff;
+
 	return true;
 }
