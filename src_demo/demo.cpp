@@ -386,7 +386,11 @@ int InitializeAll(window_t* window, TestData* data) {
 	glfwSetKeyCallback(window->window, CameraKeyCallback);
 	PackFileClose(&pack_file);
 
-
+	GLuint render_texture = -1;
+	GLuint framebuffer = -1;
+	if(false == CreateRenderTexture(&render_texture, &framebuffer, 1024, 1024)) {
+		printf("Failed creating render texture\n");
+	}
 
 	return 0;
 }
@@ -481,7 +485,7 @@ LOOP_FN(DrawLoop) {
 	// Draw with command buffer or other related functions
 	glEnable(GL_DEPTH_TEST);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dat->ibuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDrawElements(GL_TRIANGLES, sizeof(dat->idxs) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
 	GL_ERROR();
 
