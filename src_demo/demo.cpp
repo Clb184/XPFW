@@ -134,6 +134,7 @@ struct entity_t {
 	DirectX::XMFLOAT2 scale;
 	float angle;
 	int sprite_id;
+	int i0, i1, i2, i3;
 };
 
 struct sprite_t {
@@ -252,19 +253,34 @@ int InitializeAll(window_t* window, TestData* data) {
 	char* tex_dat = nullptr;
 	size_t tex_size = 0;
 	texture_metric_t metric;
-	PackFileLoadEntry(&pack_file, "grp/boss/boss11.png", (void**)&tex_dat, &tex_size);
+	PackFileLoadEntry(&pack_file, "grp/boss/boss10.png", (void**)&tex_dat, &tex_size);
 	LoadTextureFromMemory(tex_dat, &data->tex, &metric);
 	data->sprites[0] = {0.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
 	data->sprites[1] = {64.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
 	data->sprites[2] = {128.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
 	data->sprites[3] = {192.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
 
+	data->sprites[4] = {0.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[5] = {64.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[6] = {128.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[7] = {192.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+
+	data->sprites[8] = {0.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[9] = {64.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[10] = {128.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+
 	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
-	data->entity.pos = {120.0f, 120.0f};
+	data->entity.pos = {320.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
 	data->entity.scale = {1.0f, 1.0f};
 	data->entity.angle = 0.0f;
 	data->entity.sprite_id = 0;
+
+	data->entity.i0 = 0;
+	data->entity.i1 = 0;
+	data->entity.i2 = 0;
+	data->entity.i3 = 0;
 
 	//
 	TLVertex3D verts[] = {
@@ -379,31 +395,68 @@ LOOP_FN(MoveLoop) {
 
 	TestData* dat = (TestData*)data;
 	dat->var_0 += 0.12f;
-
 	// Timeline
 	{
-		switch(dat->frames_passed) {
+		switch(dat->entity.i3) {
+			case 0:
+			switch(dat->entity.i0) {
+				case 1:
+					dat->entity.sprite_id = 0;
+					break;
+				case 9:
+					dat->entity.sprite_id = 1;
+					break;
+				case 17:
+					dat->entity.sprite_id = 2;
+					break;
+				case 25:
+					dat->entity.sprite_id = 3;
+					break;
+				case 33:
+					dat->entity.i0 = 0;
+					break;
+			}
+			dat->entity.i0++;
+			break;
+
 			case 1:
-				dat->entity.sprite_id = 0;
-				break;
-			case 9:
-				dat->entity.sprite_id = 1;
-				break;
-			case 17:
-				dat->entity.sprite_id = 2;
-				break;
-			case 25:
-				dat->entity.sprite_id = 3;
-				break;
-			case 33:
-				dat->frames_passed = 0;
-				break;
+			switch(dat->entity.i1) {
+				case 1:
+					dat->entity.sprite_id = 4;
+					break;
+				case 9:
+					dat->entity.sprite_id = 5;
+					break;
+				case 17:
+					dat->entity.sprite_id = 6;
+					break;
+				case 25:
+					dat->entity.sprite_id = 7;
+					break;
+				case 41:
+					dat->entity.i1 = 0;
+					break;
+			}
+			dat->entity.i1++;
+			break;
+
+			case 2:
+			switch(dat->entity.i2) {
+				case 1:
+					dat->entity.sprite_id = 8;
+					break;
+			}
+			dat->entity.i2++;
+			break;
 		}
 	}
+
 
 	dat->frames_passed++;
 	if(!(dat->frames_passed % 60)) {
 		dat->seconds_passed++;
+		dat->entity.i3++;
+		dat->entity.i3 %= 2;
 	}
 
 	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, window->delta_time);
@@ -454,6 +507,8 @@ LOOP_FN(DrawLoop) {
 	// Draw string
 	DrawString(dat->font, 0.0f, 0.0f, "I'm just testing stuff for the lols", 0xffffffff);
 	char bf[24] = "";
+	sprintf(bf, "i3: %d", dat->entity.i3);
+	DrawString(dat->font, 0.0f, 376.0f, bf, 0xffffffff);
 	sprintf(bf, "%.2f tps", GetWindowTPS(window));
 	DrawString(dat->font, 0.0f, 400.0f, bf, 0xffffffff);
 	sprintf(bf, "%.2f fps", GetWindowFPS(window));
