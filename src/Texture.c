@@ -35,7 +35,9 @@ void LoadPNGFromMemory(png_structp png, png_bytep buf, size_t size) {
 }
 
 bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* metrics) {
-	LOG_INFO("Loading texture from file");
+	char buf[512];
+	sprintf(buf, "Loading texture from file \"%s\"", name);
+	LOG_INFO(buf);
 	assert(0 != tex_unit);
 
 	const char* png_title = name;
@@ -43,7 +45,6 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 
 	// Load data for checking signature
 	if (false == LoadDataFromFile(png_title, (void**)&chardata, 0)) {
-		char buf[1024] = "";
 		sprintf(buf, "PNG image \"%s\" does not exist", name); 
 		LOG_ERROR(buf); 
 		return false;
@@ -51,12 +52,10 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 
 	// Check for PNG signature
 	if (0 == png_sig_cmp(chardata, 0, 16)) {
-		char buf[1024] = "";
 		sprintf(buf, "Opened PNG image \"%s\"", name);
 		LOG_INFO(buf);
 	}
 	else {
-		char buf[1024] = "";
 		sprintf(buf, "Failed opening PNG image, \"%s\" is not valid", name);
 		LOG_ERROR(buf);
 		free(chardata);
@@ -198,10 +197,25 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 }
 
 bool CreateEmptyTexture(GLuint* tex_unit,int color) {
+	LOG_INFO("Creating emprty texture");
 	assert(0 != tex_unit);
 	int* pixels = calloc(256 * 256 * 4, 1); // Color is 32 bits
 	memset(pixels, color, 256 * 256 * 4);
 	CreateTexture(tex_unit, 256, 256, (char*)pixels);
 	free(pixels);
+	return true;
+}
+
+bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, GLsizei height) {
+	char buf[512];
+	sprintf(buf, "Creating render texture %lld, %lld", width, height);
+	LOG_INFO(buf);
+	assert(0 != tex_unit);
+
+	GLuint render_tex = -1;
+	glCreateTextures(GL_TEXTURE_2D, 1, &render_tex);
+	glTextureStorage2D(render_tex, 1, GL_RGBA32F, width, height);
+	glTextureSubImage2D(render_tex, 0, 0, 0, width, height, GL_RGBA)
+	
 	return true;
 }

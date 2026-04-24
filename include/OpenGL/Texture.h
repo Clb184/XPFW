@@ -21,6 +21,8 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 
 bool CreateEmptyTexture(GLuint* tex_unit, int color); // Create a blank texture using a RGBA32 color per pixel
 
+bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, GLsizei height); 
+
 #ifdef __cplusplus
 }
 #endif
