@@ -5,6 +5,7 @@
 // Creates a buffer
 bool CreateBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id) {
 	LOG_INFO("Creating Buffer");
+	char buff[512];
 	//assert(0 != descriptor);
 	assert(0 != buffer_id);
 	GLERR;
@@ -16,7 +17,8 @@ bool CreateBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id) {
 	*buffer_id = buf;
 
 	GL_ERROR_RETURN();
-
+	sprintf(buff, "Created buffer id: %lld size: %lld data from: %p", buf, descriptor.size, descriptor.data);
+	LOG_INFO(buff);
 	return true;
 }
 
