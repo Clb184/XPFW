@@ -271,6 +271,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
 
 	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
+	printf("Vertex Buffer mvbo: %lld\n", data->mvbo);
 	data->entity.pos = {320.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
 	data->entity.scale = {1.0f, 1.0f};
@@ -390,6 +391,10 @@ int InitializeAll(window_t* window, TestData* data) {
 	GLuint framebuffer = -1;
 	if(false == CreateRenderTexture(&render_texture, &framebuffer, 1024, 1024)) {
 		printf("Failed creating render texture\n");
+	} else {
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	return 0;
@@ -491,19 +496,19 @@ LOOP_FN(DrawLoop) {
 
 	// Draw 2D
 	glDisable(GL_DEPTH_TEST);
-	glActiveTexture(GL_TEXTURE0);
 	glUseProgram(dat->prg2);
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, dat->draw_buffer_cmd);
 	GL_ERROR();
 
 	// Draw textured
-	TLVertex2D* vertices = (TLVertex2D*)glMapNamedBuffer(dat->mvao, GL_WRITE_ONLY);
+	TLVertex2D* vertices = (TLVertex2D*)glMapNamedBuffer(dat->mvbo, GL_WRITE_ONLY);
 	sprite_t* current_spt = dat->sprites + dat->entity.sprite_id;
 	SetTLV(vertices, dat->entity.angle, dat->entity.pos, dat->entity.scale, dat->entity.size);
 	SetUV(vertices, current_spt->x0, current_spt->y0, current_spt->x1, current_spt->y1);
-	glUnmapNamedBuffer(dat->mvao);
+	glUnmapNamedBuffer(dat->mvbo);
+
 	glBindVertexArray(dat->mvao);
-	glBindTexture(GL_TEXTURE_2D, dat->tex);
+	glBindTextureUnit(0, dat->tex);
 
 	glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 	GL_ERROR();
