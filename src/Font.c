@@ -117,7 +117,7 @@ void DrawString(font_t* font, float ox, float oy, const char* string, uint32_t c
 	const float block_advance = font->size;
 	float x = ox, y = oy + block_advance;
 
-	TLVertex2D* vert = (TLVertex2D*)glMapNamedBuffer(font->vbuffer, GL_WRITE_ONLY);
+	TLVertex2D* vert = (TLVertex2D*)glMapNamedBufferRange(font->vbuffer, 0, len * 6 * sizeof(TLVertex2D), GL_MAP_WRITE_BIT);
 	const float adv_space = font->glyphs[' ' - 32].adv;
 	int ic = 0;
 	for (int i = 0; i < len; i++) {
