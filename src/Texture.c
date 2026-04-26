@@ -220,8 +220,6 @@ bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, G
 	GL_ERROR();
 	glTextureStorage2D(render_tex, 1, GL_RGBA32F, width, height);
 	GL_ERROR();
-	glTextureSubImage2D(render_tex, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	GL_ERROR();
 
 	glCreateFramebuffers(1, &framebuff);
 	GL_ERROR();
