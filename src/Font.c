@@ -169,3 +169,72 @@ void DrawString(font_t* font, float ox, float oy, const char* string, uint32_t c
 	glBindVertexArray(font->varray);
 	glDrawArrays(GL_TRIANGLES, 0, ic * 6);
 }
+
+void DrawStringN(font_t* font, float ox, float oy, const char* string, int cnt, uint32_t color) {
+	assert(0 != font);
+	int len = strlen(string);
+	int len2 = 0; // Len with no tabs, spaces or new lines
+	for(int i = 0; i < len; i++) {
+		char c = string[i];
+		if(c == ' ' || c == '\n') continue;
+		len2++;
+		if(len2 >= cnt) {
+			len = i + 1;
+			break;
+		}
+	}
+	const float block_advance = font->size;
+	float x = ox, y = oy + block_advance;
+
+	TLVertex2D* vert = (TLVertex2D*)glMapNamedBufferRange(font->vbuffer, 0, len2 * 6 * sizeof(TLVertex2D), GL_MAP_WRITE_BIT);
+	const float adv_space = font->glyphs[' ' - 32].adv;
+	int ic = 0;
+	for (int i = 0; i < len; i++) {
+		char c = string[i];
+		if (c == '\n') {
+			x = 0.0f;
+			y += block_advance;
+			continue;
+		}
+		else if (c == ' ') {
+			x += adv_space;
+			continue;
+		}
+
+		glyph_info_t glyph = font->glyphs[c - 32];
+
+		vert[ic * 6].x = x + glyph.l;
+		vert[ic * 6].y = y + glyph.t;
+		vert[ic * 6].u = glyph.x1;
+		vert[ic * 6].v = glyph.y1;
+		vert[ic * 6].color = color;
+		vert[ic * 6 + 3] = vert[ic * 6];
+
+		vert[ic * 6 + 1].x = x + glyph.r;
+		vert[ic * 6 + 1].y = y + glyph.t;
+		vert[ic * 6 + 1].u = glyph.x2;
+		vert[ic * 6 + 1].v = glyph.y1;
+		vert[ic * 6 + 1].color = color;
+
+		vert[ic * 6 + 2].x = x + glyph.r;
+		vert[ic * 6 + 2].y = y + glyph.b;
+		vert[ic * 6 + 2].u = glyph.x2;
+		vert[ic * 6 + 2].v = glyph.y2;
+		vert[ic * 6 + 2].color = color;
+		vert[ic * 6 + 4] = vert[ic * 6 + 2];
+
+		vert[ic * 6 + 5].x = x + glyph.l;
+		vert[ic * 6 + 5].y = y + glyph.b;
+		vert[ic * 6 + 5].u = glyph.x1;
+		vert[ic * 6 + 5].v = glyph.y2;
+		vert[ic * 6 + 5].color = color;
+
+		x += glyph.adv;
+		ic++;
+	}
+
+	glUnmapNamedBuffer(font->vbuffer);
+	glBindTextureUnit(0, font->font_atlas);
+	glBindVertexArray(font->varray);
+	glDrawArrays(GL_TRIANGLES, 0, ic * 6);
+}
