@@ -7,17 +7,26 @@
 #include <string.h>
 #include <png.h>
 
-void CreateTexture(GLuint* tex_unit, GLsizei w, GLsizei h, char* pixel_data) {
+void CreateTexture(GLuint* tex_unit, GLsizei w, GLsizei h, int channels, char* pixel_data) {
 	LOG_INFO("Creating Texture");
 	assert(0 != tex_unit);
+	assert(0 != pixel_data);
 	GLERR;
+	
+	GLenum type = GL_RGBA;
+	switch(channels) {
+		case 1: type = GL_RED; break;
+		case 2: type = GL_RG; break;
+		case 3: type = GL_RGB; break;
+		case 4: default: type = GL_RGBA; break;
+	}
 
 	// Create texture for png
 	GLuint tex_png;
 	glCreateTextures(GL_TEXTURE_2D, 1, &tex_png);
 	glTextureStorage2D(tex_png, 1, GL_RGBA32F, w, h);
 	GL_ERROR();
-	glTextureSubImage2D(tex_png, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixel_data); // Always using RGBA 8 bit per channel
+	glTextureSubImage2D(tex_png, 0, 0, 0, w, h, type, GL_UNSIGNED_BYTE, pixel_data); // Always using RGBA 8 bit per channel
 	GL_ERROR();
 	*tex_unit = tex_png;
 }
@@ -84,6 +93,8 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 		width = png_get_image_width(png_reader, png_info),
 		height = png_get_image_height(png_reader, png_info),
 		channels = png_get_channels(png_reader, png_info);
+	sprintf(buf, "Texture metrics: %dx%d, %d channels", width, height, channels);
+	LOG_INFO(buf);
 
 	// Allocate enough space for pixel data (RGBA 32 bits)
 	char* pixel_data = (char*)malloc(width * height * channels);
@@ -104,9 +115,10 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 	png_read_end(png_reader, png_info);
 
 	// Create the texture with all the retrieved pixel data
-	CreateTexture(tex_unit, width, height, pixel_data);
+	CreateTexture(tex_unit, width, height, channels, pixel_data);
 
 	// And finally, release the decoder struct and free memory
+	LOG_INFO("Freeing PNG read data");
 	png_destroy_read_struct(&png_reader, &png_info, 0);
 	free(chardata);
 	free(pixel_data);
@@ -114,26 +126,28 @@ bool LoadTextureFromFile(const char* name, GLuint* tex_unit, texture_metric_t* m
 
 	// Get these properties if requested
 	if (0 != metrics) {
+		LOG_INFO("Saving texture metrics");
 	       	metrics->width = width;
 		metrics->height = height;
 		metrics->texelw = 1.0f / (float)width;
 		metrics->texelh = 1.0f / (float)height;
+	} else {
+		LOG_INFO("Texture metrics not requested, skipping");
 	}
 	return true;
 }
 
 bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metrics) {
 	LOG_INFO("Loading texture from memory");
+	char buf[512];
 	assert(0 != tex_unit);
 
 	// Check for PNG signature
 	if (0 == png_sig_cmp(data, 0, 16)) {
-		char buf[1024] = "";
 		sprintf(buf, "Opened PNG image from memory");
 		LOG_INFO(buf);
 	}
 	else {
-		char buf[1024] = "";
 		sprintf(buf, "Failed opening PNG image from memory, data is not valid");
 		LOG_ERROR(buf);
 		return false;
@@ -160,6 +174,8 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 		width = png_get_image_width(png_reader, png_info),
 		height = png_get_image_height(png_reader, png_info),
 		channels = png_get_channels(png_reader, png_info);
+	sprintf(buf, "Texture metrics: %dx%d, %d channels", width, height, channels);
+	LOG_INFO(buf);
 
 	// Allocate enough space for pixel data (RGBA 32 bits)
 	char* pixel_data = (char*)malloc(width * height * channels);
@@ -179,7 +195,7 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 	png_read_end(png_reader, png_info);
 
 	// Create the texture with all the retrieved pixel data
-	CreateTexture(tex_unit, width, height, pixel_data);
+	CreateTexture(tex_unit, width, height, channels, pixel_data);
 
 	// And finally, release the decoder struct and free memory
 	png_destroy_read_struct(&png_reader, &png_info, 0);
@@ -201,7 +217,7 @@ bool CreateEmptyTexture(GLuint* tex_unit,int color) {
 	assert(0 != tex_unit);
 	int* pixels = calloc(256 * 256 * 4, 1); // Color is 32 bits
 	memset(pixels, color, 256 * 256 * 4);
-	CreateTexture(tex_unit, 256, 256, (char*)pixels);
+	CreateTexture(tex_unit, 256, 256, 4, (char*)pixels);
 	free(pixels);
 	return true;
 }
