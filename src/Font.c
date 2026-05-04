@@ -127,8 +127,10 @@ void DrawString(font_t* font, float ox, float oy, const char* string, uint32_t c
 			y += block_advance;
 			continue;
 		}
-		else if (c == ' ') {
+		else if (c == ' ' || c == '\t') { // Treat tabs same as spaces, just in case
 			x += adv_space;
+			continue;
+		} else if(c < ' ' || c >= 0x7F){ // Omit non-printable characters (most before space)
 			continue;
 		}
 
@@ -176,7 +178,7 @@ void DrawStringN(font_t* font, float ox, float oy, const char* string, int cnt, 
 	int len2 = 0; // Len with no tabs, spaces or new lines
 	for(int i = 0; i < len; i++) {
 		char c = string[i];
-		if(c == ' ' || c == '\n') continue;
+		if(c <= ' ' || c >= 0x7F) continue;
 		len2++;
 		if(len2 >= cnt) {
 			len = i + 1;
@@ -196,8 +198,10 @@ void DrawStringN(font_t* font, float ox, float oy, const char* string, int cnt, 
 			y += block_advance;
 			continue;
 		}
-		else if (c == ' ') {
+		else if (c == ' ' || c == '\t') { // Treat tabs the same as spaces, just in case
 			x += adv_space;
+			continue;
+		} else if(c < ' ' || c >= 0x7F){
 			continue;
 		}
 
@@ -237,4 +241,18 @@ void DrawStringN(font_t* font, float ox, float oy, const char* string, int cnt, 
 	glBindTextureUnit(0, font->font_atlas);
 	glBindVertexArray(font->varray);
 	glDrawArrays(GL_TRIANGLES, 0, ic * 6);
+}
+
+
+int GetDrawableCharacters(const char* string) {
+	int len = strlen(string);
+	int len2 = 0;
+	for(int i = 0; i < len; i++) {
+		char c = string[i];
+		if(c <= ' ' || c >= 0x7F) {
+			continue;
+		}
+		len2++;
+	}
+	return len2;
 }
