@@ -225,7 +225,7 @@ bool CreateEmptyTexture(GLuint* tex_unit,int color) {
 bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, GLsizei height) {
 	char buf[512];
 	GLERR;
-	sprintf(buf, "Creating render texture %lld, %lld", width, height);
+	sprintf(buf, "Creating render texture %d, %d", width, height);
 	LOG_INFO(buf);
 	assert(0 != tex_unit);
 	assert(0 != framebuffer);

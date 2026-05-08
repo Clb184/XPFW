@@ -11,7 +11,7 @@ extern "C" {
 typedef struct {
 	GLsizei size; // Size of buffer in bytes
 	void* data; // Initial data (Can be nullptr for uninitialized)
-	GLenum type; // Type of buffer ( Some are ARRAY_BUFFER, DRAW_INDIRECT_BUFFER, SHADER_STORAGE_BUFFER, UNIFORM_BUFFER, etc )
+	GLenum type; // Type of buffer (STATIC/DYNAMIC/STREAM DRAW/READ/COPY)
 } buffer_descriptor_t;
 
 typedef struct  {
