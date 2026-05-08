@@ -277,7 +277,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	data->sprites[10] = {128.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 
-	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
+	CreateTL2DVertexBuffer(4, mvert, GL_MAP_WRITE_BIT, &data->mvbo, &data->mvao);
 	printf("Vertex Buffer mvbo: %lld\n", data->mvbo);
 	data->entity.pos = {320.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
@@ -303,7 +303,7 @@ int InitializeAll(window_t* window, TestData* data) {
 		{ 5.0f, 0.0f, -10.0f,   0xff00ffff,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f },	   // 7
 	};
 
-	CreateTL3DVertexBuffer(sizeof(verts) / sizeof(TLVertex3D), verts, GL_STATIC_DRAW, &data->vbuffer, &data->vattrib);
+	CreateTL3DVertexBuffer(sizeof(verts) / sizeof(TLVertex3D), verts, GL_MAP_WRITE_BIT, &data->vbuffer, &data->vattrib);
 
 	//
 	float identity[] = {

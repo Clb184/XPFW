@@ -47,7 +47,7 @@ extern "C" {
 
 		buffer_descriptor_t vbd = { (GLsizei)(num_vertex * sizeof(TLVertex2D)), pdata, usage };
 		GLuint vb = -1;
-		CreateBuffer(vbd, &vb);
+		CreateStaticBuffer(vbd, &vb);
 
 		GLuint va = -1;
 		glCreateVertexArrays(1, &va);
@@ -107,7 +107,7 @@ extern "C" {
 
 		buffer_descriptor_t vbd = { (GLsizei)(num_vertex * sizeof(TLVertex3D)), pdata, usage};
 		GLuint vb = -1;
-		CreateBuffer(vbd, &vb);
+		CreateStaticBuffer(vbd, &vb);
 
 		GLuint va = -1;
 		glCreateVertexArrays(1, &va);

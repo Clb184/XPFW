@@ -11,7 +11,10 @@ extern "C" {
 typedef struct {
 	GLsizei size; // Size of buffer in bytes
 	void* data; // Initial data (Can be nullptr for uninitialized)
-	GLenum type; // Type of buffer (STATIC/DYNAMIC/STREAM DRAW/READ/COPY)
+	union {
+		GLbitfield flags;
+		GLenum type; // Type of buffer (STATIC/DYNAMIC/STREAM DRAW/READ/COPY)
+	};
 } buffer_descriptor_t;
 
 typedef struct  {
@@ -29,6 +32,8 @@ typedef struct  {
 
 bool CreateBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id); // Creates a single buffer
 bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, int cnt); // Creates multiple buffers (Must pass an existing array)
+bool CreateStaticBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id); // Creates a buffer storage (Size is limited to that)
+bool CreateStaticBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, int cnt); // Creates a buffer storage (Size is limited to that)
 bool CreateVertexAttribute(const attribute_info_t attribute_data, const buffer_info_t buffer_data, GLuint* vertex_array); // Create a vertex attribute buffer
 void BindConstantBuffer(const GLuint buffer, int index); // Bind a buffer to a constant buffer slot (Shader Storage Buffer Object in this case)
 

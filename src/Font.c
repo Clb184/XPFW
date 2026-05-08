@@ -107,7 +107,7 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	font->font_atlas = font_atlas;
 	
 	// Create the vertex buffer and vertex array
-	CreateTL2DVertexBuffer(1024L * 6L, 0, GL_DYNAMIC_DRAW, &font->vbuffer, &font->varray); // At least 1024 characters per font (And size)
+	CreateTL2DVertexBuffer(1024L * 6L, 0, GL_MAP_WRITE_BIT, &font->vbuffer, &font->varray); // At least 1024 characters per font (And size)
 	return true;
 }
 
