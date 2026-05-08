@@ -4,7 +4,7 @@
 
 // Creates a buffer
 bool CreateBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id) {
-	LOG_INFO("Creating Buffer");
+	LOG_INFO("Creating buffer");
 	char buff[512];
 	//assert(0 != descriptor);
 	assert(0 != buffer_id);
@@ -17,14 +17,15 @@ bool CreateBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id) {
 	*buffer_id = buf;
 
 	GL_ERROR_RETURN();
-	sprintf(buff, "Created buffer id: %lld size: %lld data from: %p", buf, descriptor.size, descriptor.data);
+	sprintf(buff, "Created buffer id: %d size: %d data from: %p", buf, descriptor.size, descriptor.data);
 	LOG_INFO(buff);
 	return true;
 }
 
 // Same as above, but creates multiple buffers
 bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, int cnt) {
-	LOG_INFO("Creating Buffers");
+	char buf[512];
+	sprintf(buf, "Creating %d buffers", cnt);
 	assert(0 != descriptors);
 	assert(0 != buffer_ids);
 	GLERR;
@@ -32,6 +33,13 @@ bool CreateBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, i
 	glCreateBuffers(cnt, buffer_ids);
 	for (int i = 0; i < cnt; i++) {
 		glNamedBufferData(buffer_ids[i], descriptors[i].size, descriptors[i].data, descriptors[i].type);
+
+		GL_ERROR();	
+
+		{
+			sprintf(buf, "Created buffer with id: %d size: %d data from: %p", buffer_ids[i], descriptors[i].size, descriptors[i].data);
+			LOG_INFO(buf);
+		}
 	}
 
 	GL_ERROR_RETURN();

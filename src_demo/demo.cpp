@@ -307,9 +307,9 @@ int InitializeAll(window_t* window, TestData* data) {
 	DirectX::XMMATRIX prj = DirectX::XMMatrixOrthographicOffCenterLH(0.0, 640.0, 480.0f, 0.0f, 1.0f, -1.0f);
 
 	//
-	glUseProgram(data->prg2);
-	GL_ERROR();
-	glUniformMatrix4fv(0, 1, GL_FALSE, (float*)&prj);
+	//glUseProgram(data->prg2);
+	//GL_ERROR();
+	glProgramUniformMatrix4fv(data->prg2, 0, 1, GL_FALSE, (float*)&prj);
 	GL_ERROR();
 
 	glUseProgram(data->prg);
@@ -426,6 +426,7 @@ LOOP_FN(MoveLoop) {
 					break;
 			}
 			dat->entity.i0++;
+			dat->entity.i1 = 1;
 			break;
 
 			case 1:
@@ -447,6 +448,7 @@ LOOP_FN(MoveLoop) {
 					break;
 			}
 			dat->entity.i1++;
+			dat->entity.i0 = 1;
 			break;
 
 			case 2:
@@ -482,7 +484,6 @@ LOOP_FN(DrawLoop) {
 	
 	// Move logic and update stuff
 	glUseProgram(dat->prg);
-	glBindBuffer(GL_UNIFORM_BUFFER, dat->cmdata.buffer);
 	glBindVertexArray(dat->vattrib);
 	GL_ERROR();
 
