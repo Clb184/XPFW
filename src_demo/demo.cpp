@@ -134,6 +134,7 @@ struct entity_t {
 	DirectX::XMFLOAT2 scale;
 	float angle;
 	int sprite_id;
+	uint32_t color;
 	int i0, i1, i2, i3;
 };
 
@@ -142,7 +143,6 @@ struct sprite_t {
 	float y0;
 	float x1;
 	float y1;
-	uint32_t color;
 };
 
 struct TestData {
@@ -218,6 +218,13 @@ void SetUV(TLVertex2D* vertex, float x0, float y0, float x1, float y1) {
 	vertex[3].v = (y0 + y1);
 }
 
+void SetColor(TLVertex2D* vertex, uint32_t color) {
+	vertex[0].color = color;
+	vertex[1].color = color;
+	vertex[2].color = color;
+	vertex[3].color = color;
+}
+
 int InitializeAll(window_t* window, TestData* data) {
 	GLERR;
 	
@@ -255,20 +262,20 @@ int InitializeAll(window_t* window, TestData* data) {
 	texture_metric_t metric;
 	PackFileLoadEntry(&pack_file, "grp/boss/boss10.png", (void**)&tex_dat, &tex_size);
 	LoadTextureFromMemory(tex_dat, &data->tex, &metric);
-	data->sprites[0] = {0.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[1] = {64.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[2] = {128.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[3] = {192.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[0] = {0.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[1] = {64.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[2] = {128.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[3] = {192.0f * metric.texelw, 0.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 
-	data->sprites[4] = {0.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[5] = {64.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[6] = {128.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[7] = {192.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[4] = {0.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[5] = {64.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[6] = {128.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[7] = {192.0f * metric.texelw, 64.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 
-	data->sprites[8] = {0.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[9] = {64.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[10] = {128.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
-	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh, 0xffffffff};
+	data->sprites[8] = {0.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[9] = {64.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[10] = {128.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
+	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 
 	CreateTL2DVertexBuffer(4, mvert, GL_DYNAMIC_DRAW, &data->mvbo, &data->mvao);
 	printf("Vertex Buffer mvbo: %lld\n", data->mvbo);
@@ -277,6 +284,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	data->entity.scale = {1.0f, 1.0f};
 	data->entity.angle = 0.0f;
 	data->entity.sprite_id = 0;
+	data->entity.color = 0x99ffffff;
 
 	data->entity.i0 = 0;
 	data->entity.i1 = 0;
@@ -369,7 +377,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	
 	char* pcm_data = nullptr;
 	size_t pcm_size = 0;
-	PackFileLoadEntry(&pack_file, "bgm/02.ogg", (void**)&pcm_data, &pcm_size);
+	PackFileLoadEntry(&pack_file, "exboss_2.ogg", (void**)&pcm_data, &pcm_size);
 	LoadSoundFromMemory(snd_control, 0, 1, pcm_data, pcm_size);
 	PackFileLoadEntry(&pack_file, "bgm/06.ogg", (void**)&pcm_data, &pcm_size);
 	LoadSoundFromMemory(snd_control, 1, 1, pcm_data, pcm_size);
@@ -505,6 +513,7 @@ LOOP_FN(DrawLoop) {
 	sprite_t* current_spt = dat->sprites + dat->entity.sprite_id;
 	SetTLV(vertices, dat->entity.angle, dat->entity.pos, dat->entity.scale, dat->entity.size);
 	SetUV(vertices, current_spt->x0, current_spt->y0, current_spt->x1, current_spt->y1);
+	SetColor(vertices, dat->entity.color);
 	glUnmapNamedBuffer(dat->mvbo);
 
 	glBindVertexArray(dat->mvao);
@@ -514,7 +523,7 @@ LOOP_FN(DrawLoop) {
 	GL_ERROR();
 
 	// Draw string
-	DrawString(dat->font, 0.0f, 0.0f, "I'm just testing stuff for the lols", 0xffffffff);
+	DrawString(dat->font, 0.0f, 0.0f, "I'm just testing stuff for the lols,\nProbando texto en español, murciélago espontáneo", 0xffffffff);
 	char bf[24] = "";
 	sprintf(bf, "i3: %d", dat->entity.i3);
 	DrawString(dat->font, 0.0f, 376.0f, bf, 0xffffffff);
