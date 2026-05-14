@@ -37,10 +37,10 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	LOG_INFO(buf);
 	assert(0 != window_data);
 
-	// Start GLFW with Core OpenGL 4.6 support
+	// Start GLFW with Core OpenGL 4.5 support because I want to support as many machines as possible
 	if (GLFW_FALSE == glfwInit()) return -1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_TRUE);
