@@ -157,6 +157,8 @@ struct TestData {
 	GLuint tex = 0xffffffff;
 	texture_metric_t mmetric;
 	GLuint mvbo, mvao;
+	TLVertex2D* mvertex;
+	GLsync msync;
 	entity_t entity;
 	float var_0;
 
@@ -277,7 +279,9 @@ int InitializeAll(window_t* window, TestData* data) {
 	data->sprites[10] = {128.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 
-	CreateTL2DVertexBuffer(4, mvert, GL_MAP_WRITE_BIT, &data->mvbo, &data->mvao);
+	CreateTL2DVertexBuffer(4, mvert, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT, &data->mvbo, &data->mvao);
+	data->mvertex = (TLVertex2D*)glMapNamedBufferRange(data->mvbo, 0, sizeof(mvert), GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+	data->msync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 	printf("Vertex Buffer mvbo: %lld\n", data->mvbo);
 	data->entity.pos = {320.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
@@ -404,7 +408,6 @@ int InitializeAll(window_t* window, TestData* data) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
-
 	return 0;
 }
 
@@ -510,18 +513,30 @@ LOOP_FN(DrawLoop) {
 	GL_ERROR();
 
 	// Draw textured
-	TLVertex2D* vertices = (TLVertex2D*)glMapNamedBuffer(dat->mvbo, GL_WRITE_ONLY);
+	TLVertex2D* vertices = dat->mvertex;
+	while(1){
+		GLenum sign = glClientWaitSync(dat->msync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000);
+		if(GL_ALREADY_SIGNALED == sign || GL_CONDITION_SATISFIED == sign){
+			break;
+		} else if(GL_WAIT_FAILED == sign) {
+			GL_ERROR();
+			LOG_ERROR("Failed to execute command");
+			return;
+		}
+	}
+
 	sprite_t* current_spt = dat->sprites + dat->entity.sprite_id;
 	SetTLV(vertices, dat->entity.angle, dat->entity.pos, dat->entity.scale, dat->entity.size);
 	SetUV(vertices, current_spt->x0, current_spt->y0, current_spt->x1, current_spt->y1);
 	SetColor(vertices, dat->entity.color);
-	glUnmapNamedBuffer(dat->mvbo);
+	//glUnmapNamedBuffer(dat->mvbo);
 
 	glBindVertexArray(dat->mvao);
 	glBindTextureUnit(0, dat->tex);
 
 	glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 	GL_ERROR();
+	dat->msync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 	// Draw string
 	DrawString(dat->font, 0.0f, 0.0f, "I'm just testing stuff for the lols,\nProbando texto en español, murciélago espontáneo", 0xffffffff);
