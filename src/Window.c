@@ -28,12 +28,12 @@ bool CreateGLWindow(const char* title, int width, int height, bool fullscreen, w
 }
 
 void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* msg, const void* user_data) {
-	sprintf(stdout, "GL MSG: src %d type: %d id %d severity %d \"%s\"\n", source, type, id, severity, msg);
+	fprintf(stdout, "GL MSG: src %d type: %d id %d severity %d \"%s\"\n", source, type, id, severity, msg);
 }
 
 bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	char buf[512];
-	sprintf(buf, "Creating Window with OpenGL 4.6 support with GLFW (%d x %d) (%s)", state.width, state.height, state.fullscreen ? "Fullscreen" : "Windowed");
+	sprintf(buf, "Creating Window with OpenGL 4.5 support with GLFW (%d x %d) (%s)", state.width, state.height, state.fullscreen ? "Fullscreen" : "Windowed");
 	LOG_INFO(buf);
 	assert(0 != window_data);
 

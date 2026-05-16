@@ -279,9 +279,11 @@ int InitializeAll(window_t* window, TestData* data) {
 	data->sprites[10] = {128.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 	data->sprites[11] = {192.0f * metric.texelw, 128.0f * metric.texelh, 64.0f * metric.texelw, 64.0f * metric.texelh};
 
+	// Persistently map buffer
 	CreateTL2DVertexBuffer(4, mvert, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT, &data->mvbo, &data->mvao);
 	data->mvertex = (TLVertex2D*)glMapNamedBufferRange(data->mvbo, 0, sizeof(mvert), GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 	data->msync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
 	printf("Vertex Buffer mvbo: %lld\n", data->mvbo);
 	data->entity.pos = {320.0f, 120.0f};
 	data->entity.size = {64.0f, 64.0f};
@@ -514,11 +516,10 @@ LOOP_FN(DrawLoop) {
 
 	// Draw textured
 	TLVertex2D* vertices = dat->mvertex;
-	while(1){
-		GLenum sign = glClientWaitSync(dat->msync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000);
-		if(GL_ALREADY_SIGNALED == sign || GL_CONDITION_SATISFIED == sign){
-			break;
-		} else if(GL_WAIT_FAILED == sign) {
+	GLenum sign = GL_UNSIGNALED;
+	while (GL_ALREADY_SIGNALED != sign && GL_CONDITION_SATISFIED != sign) {
+		sign = glClientWaitSync(dat->msync, GL_SYNC_FLUSH_COMMANDS_BIT, 1000);
+		if(GL_WAIT_FAILED == sign) {
 			GL_ERROR();
 			LOG_ERROR("Failed to execute command");
 			return;
@@ -536,6 +537,7 @@ LOOP_FN(DrawLoop) {
 
 	glDrawArraysIndirect(GL_TRIANGLE_STRIP, 0);
 	GL_ERROR();
+	glDeleteSync(dat->msync);
 	dat->msync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 	// Draw string
