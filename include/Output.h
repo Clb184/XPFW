@@ -6,8 +6,14 @@
 
 #ifdef _DEBUG
 
-#define LOG_INFO(x) fprintf(stdout, "[INFO] %s : %d - %s() | %s\n", __FILE__, __LINE__, __func__, x)
-#define LOG_ERROR(x) fprintf(stderr, "[ERROR] %s : %d - %s() | %s\n", __FILE__, __LINE__, __func__, x)
+#define LOGINFO_OUT stdout
+#define LOGERROR_OUT stderr
+#define LOGEX_OUT stdout
+
+
+#define LOG_INFO(x) fprintf(LOGINFO_OUT, "[INFO] %s : %d - %s() | %s\n", __FILE__, __LINE__, __func__, x)
+#define LOG_ERROR(x) fprintf(LOGERROR_OUT, "[ERROR] %s : %d - %s() | %s\n", __FILE__, __LINE__, __func__, x)
+#define LOG_EX(x) fprintf(LOGINFO_OUT, "%s\n", x)
 
 static const char* GetGLErrorValueString(int e) {
 

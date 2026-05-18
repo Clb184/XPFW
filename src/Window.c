@@ -71,7 +71,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	sprintf(buf, "GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	LOG_INFO(buf);
 
-	glDebugMessageCallback(GLDebugCallback, 0);
+	//glDebugMessageCallback(GLDebugCallback, 0);
 
 	window_data->window_state = state;
 	window_data->window = win;
@@ -89,7 +89,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 }
 
 struct draw_info_t {
-	loop_fn draw_fn;
+	move_loop_fn draw_fn;
 	window_t* window_data;
 	void* data;
 	float fps;
@@ -97,29 +97,24 @@ struct draw_info_t {
 	double delta_move;
 };
 
-void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_loop) {
-	// Show from icon, this could be done after loading everything
-	glfwIconifyWindow(window->window);
-#ifdef WIN32
-	_sleep(1000); // Just wait a bit for the "restore window" (kinda imitating some game over there)
-#endif
+void RunMainLoop(window_t* window, void* data, move_loop_fn move_loop, draw_loop_fn draw_loop) {
+	// Show window
 	glfwShowWindow(window->window);
-	glfwRestoreWindow(window->window);
 
 	const double delta_logic = 1.0 / 60.0;
 	const double delta_draw = 1.0 / 60.0;
 	double logic_tick_acum = 0.0f;
 	double draw_tick_acum = 0.0f;
 
-	struct draw_info_t draw_info;
+	/*struct draw_info_t draw_info;
 	draw_info.draw_fn = draw_loop;
 	draw_info.window_data = window;
 	draw_info.data = data;
-	draw_info.fps = 0.0f;
+	draw_info.fps = 0.0f;*/
 
 	GLFWwindow* win = window->window;
 
-	window->__internal = &draw_info;
+	//window->__internal = &draw_info;
 
 	// Clear color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -142,7 +137,7 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 		if (logic_tick_acum >= delta_logic) {
 
 			window->delta_time = logic_tick_acum;
-			draw_info.delta_move = logic_tick_acum;
+			//draw_info.delta_move = logic_tick_acum;
 			move_loop(window, data);
 			logic_tick_acum = 0.0f;
 			on_sleep = true;
@@ -154,8 +149,8 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// Draw function
-			draw_info.delta_draw = draw_tick_acum;
-			draw_loop(draw_info.window_data, draw_info.data);
+			window->delta_draw = draw_tick_acum;
+			draw_loop(window, data);
 
 			// Move the Swap Chain
 			glfwSwapBuffers(win);
@@ -174,11 +169,11 @@ void RunMainLoop(window_t* window, void* data, loop_fn move_loop, loop_fn draw_l
 }
 
 float GetWindowFPS(window_t* window) {
-	return 1.0 / ((struct draw_info_t*)window->__internal)->delta_draw;
+	return 1.0 / window->delta_draw;
 }
 
 float GetWindowTPS(window_t* window) {
-	return 1.0 / ((struct draw_info_t*)window->__internal)->delta_move;
+	return 1.0 / window->delta_time;
 }
 
 void DestroyGLWindow(window_t* window) {

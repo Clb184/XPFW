@@ -413,7 +413,7 @@ int InitializeAll(window_t* window, TestData* data) {
 	return 0;
 }
 
-LOOP_FN(MoveLoop) {
+void MoveLoop(window_t* window, void* data) {
 
 	TestData* dat = (TestData*)data;
 	dat->var_0 += 0.12f;
@@ -486,7 +486,7 @@ LOOP_FN(MoveLoop) {
 	MoveCamera(&dat->cmdata, dat->cmdata.mov_bits, window->delta_time);
 }
 
-LOOP_FN(DrawLoop) {
+void DrawLoop(window_t* window, void* data) {
 	TestData* dat = (TestData*)data; 
 	GLERR;
 

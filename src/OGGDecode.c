@@ -128,7 +128,7 @@ bool LoadVorbisFile(const char* filename, vorbis_data_t* vorbis_data) {
 bool LoadVorbisFromMemory(char* data, size_t size, vorbis_data_t* vorbis_data) {
 	char buf[256] = "";
 	int result = 0;
-	sprintf(buf, "Loading Vorbis data from memory (%lld bytes)", size);
+	sprintf(buf, "Loading Vorbis data from memory (%d bytes)", size);
 	LOG_INFO(buf);
 	assert(0 != vorbis_data);
 	ov_callbacks data_read = { 0 };
