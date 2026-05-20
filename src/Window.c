@@ -168,6 +168,65 @@ void RunMainLoop(window_t* window, void* data, move_loop_fn move_loop, draw_loop
 	DestroyGLWindow(window);
 }
 
+void RunMainLoopDT(window_t* window, void* data, move_loop_dt_fn move_loop, draw_loop_dt_fn draw_loop) {
+	// Show window
+	glfwShowWindow(window->window);
+
+	const double delta_logic = 1.0 / 60.0;
+	const double delta_draw = 1.0 / 60.0;
+	double logic_tick_acum = 0.0f;
+	double draw_tick_acum = 0.0f;
+
+	/*struct draw_info_t draw_info;
+	draw_info.draw_fn = draw_loop;
+	draw_info.window_data = window;
+	draw_info.data = data;
+	draw_info.fps = 0.0f;*/
+
+	GLFWwindow* win = window->window;
+
+	//window->__internal = &draw_info;
+
+	// Clear color
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearDepth(1.0f);
+
+	// Enable VSync
+	glfwSwapInterval(1);
+
+	double past_time = 0.0f;
+	double temp = 0.0f;
+
+	bool on_sleep = false;
+	while (!glfwWindowShouldClose(window->window)) {
+		// Process events and clear screen
+		glfwPollEvents();
+
+		temp = glfwGetTime();
+		const double delta_time = temp - past_time;
+
+		// Run main loop
+		// Move logic, uncapped to whatever refresh rate the display has
+		window->delta_time = past_time;
+		move_loop(window, past_time, data);
+		on_sleep = true;
+
+		// Clear Screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Draw function
+		window->delta_draw = past_time;
+		draw_loop(window, past_time, data);
+
+		// Move the Swap Chain
+		glfwSwapBuffers(win);
+		
+	}
+
+	// Doing this only for convenience
+	DestroyGLWindow(window);
+}
+
 float GetWindowFPS(window_t* window) {
 	return 1.0 / window->delta_draw;
 }

@@ -391,7 +391,7 @@ int InitializeAll(window_t* window, TestData* data) {
 
 	char* font_dat = nullptr;
 	size_t font_sz = 0;
-	PackFileLoadEntry(&pack_file, "PermanentMarker-Regular.ttf", (void**)&font_dat, &font_sz);
+	PackFileLoadEntry(&pack_file, "msgothic.ttf", (void**)&font_dat, &font_sz);
 	InitializeFreeType(&data->library);
 	LoadFontFromMemory(data->library, &data->font_desc, font_dat, font_sz);
 	data->font = new font_t;
