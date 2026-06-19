@@ -204,19 +204,23 @@ void RunMainLoopDT(window_t* window, void* data, move_loop_dt_fn move_loop, draw
 
 		temp = glfwGetTime();
 		const double delta_time = temp - past_time;
+		past_time = temp;
+		//printf("temp: %.4f\n", temp);
+		//printf("delt: %.4f\n", delta_time);
+		//printf("past: %.4f\n", past_time);
 
 		// Run main loop
 		// Move logic, uncapped to whatever refresh rate the display has
-		window->delta_time = past_time;
-		move_loop(window, past_time, data);
+		window->delta_time = delta_time;
+		move_loop(window, delta_time, data);
 		on_sleep = true;
 
 		// Clear Screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw function
-		window->delta_draw = past_time;
-		draw_loop(window, past_time, data);
+		window->delta_draw = delta_time;
+		draw_loop(window, delta_time, data);
 
 		// Move the Swap Chain
 		glfwSwapBuffers(win);
