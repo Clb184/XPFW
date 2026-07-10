@@ -20,10 +20,12 @@ if(MSVC)
 	message("sal.h already comes with VS...")
 else()
 	message("Getting sal.h for DirectXMath")
-	file(DOWNLOAD https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h  ${CMAKE_HOME_DIRECTORY}/include/sal.h )
+	file(DOWNLOAD https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h  ${CMAKE_CURRENT_SOURCE_DIR}/include/sal.h )
 endif()
 
-if("" STREQUAL "${CMAKE_BUILD_TYPE}")
+if(UNIX)
+
+elseif("" STREQUAL "${CMAKE_BUILD_TYPE}")
 	message("Configuration not selected, defaulting to debug")
 	set(CMAKE_BUILD_TYPE "Debug")
 	message("Config is now ${CMAKE_BUILD_TYPE}")
@@ -32,18 +34,23 @@ endif()
 # Set some variables to disable stuff I don't want to build.
 # I only use static libs so I have less files to deal with,
 # and also use some debug postfix like d for debug builds
-set(CMAKE_DEBUG_POSTFIX "d")
+set(CMAKE_DEBUG_POSTFIX d)
 
-# Replace the "Release" string however was written so
-# the CMAKE_DEBUG_POSTFIX variable can be "removed"
-string(REGEX REPLACE "([Rr][Ee][Ll][Ee][Aa][Ss][Ee])" "RELEASE" RELEASE_CFG ${CMAKE_BUILD_TYPE})
+if(WIN32)
+	# Replace the "Release" string however was written so
+	# the CMAKE_DEBUG_POSTFIX variable can be "removed"
+	string(REGEX REPLACE "([Rr][Ee][Ll][Ee][Aa][Ss][Ee])" "RELEASE" RELEASE_CFG ${CMAKE_BUILD_TYPE})
 
-set(CONFIG_DIR "Debug/")
-set(IS_DEBUG TRUE)
-if("RELEASE" STREQUAL ${RELEASE_CFG})
-set(CMAKE_DEBUG_POSTFIX "")
-set(CONFIG_DIR "Release/")
-set(IS_DEBUG FALSE)
+	set(CONFIG_DIR "Debug/")
+	set(IS_DEBUG TRUE)
+endif()
+
+if(UNIX)
+
+elseif("RELEASE" STREQUAL ${RELEASE_CFG})
+	set(CMAKE_DEBUG_POSTFIX "")
+	set(CONFIG_DIR "Release/")
+	set(IS_DEBUG FALSE)
 endif()
 
 message("Debug postfix is: ${CMAKE_DEBUG_POSTFIX} for ${CMAKE_BUILD_TYPE}" )

@@ -167,7 +167,7 @@ int PackFileCreate(pack_file_t* pack_file){
 	assert(0 != pack_file);
 
 	// Initialize a new pack file
-	pack_file->file = 2; // Get ready for write
+	pack_file->file = 0; // Get ready for write
 	pack_file->state = 0;
 	pack_file->file_size = 0;
 	pack_file->entry_count = 0;
