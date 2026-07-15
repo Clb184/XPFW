@@ -33,12 +33,16 @@ void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLs
 
 bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 	char buf[512];
-	sprintf(buf, "Creating Window with OpenGL 4.5 support with GLFW (%d x %d) (%s)", state.width, state.height, state.fullscreen ? "Fullscreen" : "Windowed");
+	sprintf(buf, "Creating Window with OpenGL 4.5 support with GLFW (%d x %d / %s)", state.width, state.height, state.fullscreen ? "Fullscreen" : "Windowed");
 	LOG_INFO(buf);
 	assert(0 != window_data);
 
 	// Start GLFW with Core OpenGL 4.5 support because I want to support as many machines as possible
-	if (GLFW_FALSE == glfwInit()) return -1;
+	if (GLFW_FALSE == glfwInit())  {
+		LOG_ERROR("Failed to initialize GLFW");
+		return false;
+	}
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
