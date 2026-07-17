@@ -79,6 +79,7 @@ bool CreateGLWindowFromState(window_state_t state, window_t* window_data) {
 
 	window_data->window_state = state;
 	window_data->window = win;
+	window_data->on_exit = false;
 
 	// Default config for what I usually use
 	glDisable(GL_CULL_FACE);
@@ -130,7 +131,7 @@ void RunMainLoop(window_t* window, void* data, move_loop_fn move_loop, draw_loop
 	double past_time = 0.0f;
 
 	bool on_sleep = false;
-	while (!glfwWindowShouldClose(window->window)) {
+	while (!glfwWindowShouldClose(window->window) && !window->on_exit) {
 		// Process events and clear screen
 		glfwPollEvents();
 
@@ -202,7 +203,7 @@ void RunMainLoopDT(window_t* window, void* data, move_loop_dt_fn move_loop, draw
 	double temp = 0.0f;
 
 	bool on_sleep = false;
-	while (!glfwWindowShouldClose(window->window)) {
+	while (!glfwWindowShouldClose(window->window) && !window->on_exit) {
 		// Process events and clear screen
 		glfwPollEvents();
 

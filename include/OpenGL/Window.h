@@ -24,6 +24,7 @@ typedef struct {
 	float delta_time; // 0.0f
 	float delta_draw;
 	void* __internal;
+	bool on_exit;
 	window_state_t window_state;
 } window_t;
 

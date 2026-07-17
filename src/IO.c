@@ -36,7 +36,7 @@ bool LoadTextFromFile(const char* file_name, char** src, size_t* size) {
 		sz = ftell(fp);
 		rewind(fp);
 
-		void* data = calloc(sz, 1);
+		void* data = calloc(sz + 1, 1);
 		if (data) {
 			fread(data, sz, 1, fp);
 			if (size) {
