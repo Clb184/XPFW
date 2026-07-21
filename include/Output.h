@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef _DEBUG
+#if 1
 
 #define LOGINFO_OUT stdout
 #define LOGERROR_OUT stderr
