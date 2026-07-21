@@ -143,13 +143,15 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 	assert(0 != tex_unit);
 
 	// Check for PNG signature
-	if (0 == png_sig_cmp(data, 0, 16)) {
-		sprintf(buf, "Opened PNG image from memory");
-		LOG_INFO(buf);
+	if(0 == data) {
+		LOG_ERROR("Received null texture data");
+		return false;
+	}
+	else if (0 == png_sig_cmp(data, 0, 16)) {
+		LOG_INFO("Opened PNG image from memory");
 	}
 	else {
-		sprintf(buf, "Failed opening PNG image from memory, data is not valid");
-		LOG_ERROR(buf);
+		LOG_ERROR("Failed opening PNG image from memory, data is not valid");
 		return false;
 	}
 
@@ -201,9 +203,11 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 	png_destroy_read_struct(&png_reader, &png_info, 0);
 	free(pixel_data);
 	free(ppRows);
+	LOG_INFO("Loaded texture successfully");
 
 	// Get these properties if requested
 	if (0 != metrics) {
+		LOG_INFO("Saving metrics...");
 	       	metrics->width = width;
 		metrics->height = height;
 		metrics->texelw = 1.0f / (float)width;
