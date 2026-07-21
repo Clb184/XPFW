@@ -23,8 +23,10 @@ else()
 	file(DOWNLOAD https://raw.githubusercontent.com/dotnet/runtime/main/src/coreclr/pal/inc/rt/sal.h  ${CMAKE_CURRENT_SOURCE_DIR}/include/sal.h )
 endif()
 
-if(UNIX)
+message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
+if(UNIX)
+	message("Building for Linux/UNIX")
 elseif("" STREQUAL "${CMAKE_BUILD_TYPE}")
 	message("Configuration not selected, defaulting to debug")
 	set(CMAKE_BUILD_TYPE "Debug")
