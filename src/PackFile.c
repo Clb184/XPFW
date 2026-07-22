@@ -122,12 +122,14 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 					header.magic[3]
 					);
 			LOG_ERROR(buf);
+			return -1;
 		}
 		
 	}
 	else {
 		// Not a complete file or corresponding
 		LOG_ERROR("Not valid pack file");
+		return -1;
 	}
 
 	return 0;
