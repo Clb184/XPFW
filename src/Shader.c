@@ -15,6 +15,7 @@ bool LoadShaderFromFile(const char* file_name, GLuint* shader_unit, GLenum shade
 	GLuint shader = glCreateShader(shader_type);
 	GLint status = -1;
 	GLchar buffer[1024] = "";
+	GL_ERROR();
 
 	glShaderSource(shader, 1, (const GLchar* const*)&src, NULL);
 	glCompileShader(shader);

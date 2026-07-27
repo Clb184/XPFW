@@ -104,11 +104,26 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 	glTextureSubImage2D(font_atlas, 0, 0, 0, atlas_size, atlas_size, GL_RGBA, GL_UNSIGNED_BYTE, expanded_pixel_data);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
 
+	// Finish with TTF Face
+	FT_Done_Face(face);
+
 	font->font_atlas = font_atlas;
 	
 	// Create the vertex buffer and vertex array
 	CreateTL2DVertexBuffer(1024L * 6L, 0, GL_MAP_WRITE_BIT, &font->vbuffer, &font->varray); // At least 1024 characters per font (And size)
 	return true;
+}
+
+void DestroyFont(font_t* font) {
+	assert(0 != font);
+
+	glDeleteTextures(1, &font->font_atlas);
+	font->font_atlas = -1;
+	font->size = 0.0f;
+	font->w = 0.0f;
+	font->h = 0.0f;
+	glDeleteBuffers(1, &font->vbuffer);
+	glDeleteBuffers(1, &font->varray);
 }
 
 void DrawString(font_t* font, float ox, float oy, const char* string, uint32_t color) {
