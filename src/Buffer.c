@@ -112,3 +112,12 @@ void BindConstantBuffer(const GLuint buffer, int index) {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer);
 	GL_ERROR();
 }
+
+indirect_draw_t CreateIndirectDrawCmd(uint32_t count, uint32_t instances, uint32_t first, uint32_t base_instance) {
+	indirect_draw_t ret;
+	ret.count = count;
+	ret.instances = instances;
+	ret.first = first;
+	ret.base_instance = base_instance;
+	return ret;
+}

@@ -8,6 +8,14 @@
 extern "C" {
 #endif
 
+// Taken from Khronos Wiki
+typedef struct {
+	uint32_t count;
+	uint32_t instances;
+	uint32_t first;
+	uint32_t base_instance;
+} indirect_draw_t;
+
 typedef struct {
 	GLsizei size; // Size of buffer in bytes
 	void* data; // Initial data (Can be nullptr for uninitialized)
@@ -36,6 +44,8 @@ bool CreateStaticBuffer(const buffer_descriptor_t descriptor, GLuint* buffer_id)
 bool CreateStaticBuffers(const buffer_descriptor_t* descriptors, GLuint* buffer_ids, int cnt); // Creates a buffer storage (Size is limited to that)
 bool CreateVertexAttribute(const attribute_info_t attribute_data, const buffer_info_t buffer_data, GLuint* vertex_array); // Create a vertex attribute buffer
 void BindConstantBuffer(const GLuint buffer, int index); // Bind a buffer to a constant buffer slot (Shader Storage Buffer Object in this case)
+
+indirect_draw_t CreateIndirectDrawCmd(uint32_t count, uint32_t instances, uint32_t first, uint32_t base_instance); // Indirect draw, information about drawing already stored on the GPU
 
 #ifdef __cplusplus
 }
