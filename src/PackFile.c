@@ -122,6 +122,7 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 					header.magic[3]
 					);
 			LOG_ERROR(buf);
+			fclose(file);
 			return -1;
 		}
 		
@@ -129,6 +130,7 @@ int PackFileOpen(pack_file_t* pack_file, const char* filename) {
 	else {
 		// Not a complete file or corresponding
 		LOG_ERROR("Not valid pack file");
+		fclose(file);
 		return -1;
 	}
 
@@ -147,10 +149,11 @@ int PackFileClose(pack_file_t* pack_file) {
 			free(entry->name);
 			entry->name = 0;
 		}
-		if(0 != entry->data) {
+		// User must manage the loaded data
+		/*if(0 != entry->data) {
 			free(entry->data);
 			entry->data = 0;
-		}
+		}*/
 	}
 	
 	// Delete loaded entry table (The one loaded from file)
