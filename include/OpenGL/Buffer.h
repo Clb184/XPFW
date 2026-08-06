@@ -1,8 +1,9 @@
 #ifndef BUFFERCREATE_INCLUDED
 #define BUFFERCREATE_INCLUDED
 
-#include <GL/glew.h>
-#include <stdbool.h>
+#include "GL/glew.h"
+#include "stdbool.h"
+#include "stdint.h"
 
 #ifdef __cplusplus
 extern "C" {
