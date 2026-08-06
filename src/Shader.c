@@ -75,6 +75,8 @@ bool CreateShaderProgram(GLuint vertex_shader, GLuint fragment_shader, GLuint* p
 		glGetProgramInfoLog(program, 1024, NULL, buffer);
 		fprintf(stderr, "Program compilation error log:\n%s\n", buffer);
 	}
+	glDeleteShader(vertex_shader);
+	glDeleteShader(fragment_shader);
 
 	GL_ERROR_RETURN();
 	*program_unit = program;

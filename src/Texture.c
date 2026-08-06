@@ -254,3 +254,70 @@ bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, G
 
 	return true;
 }
+
+bool CreateRenderTextureA(render_texture_t* rt, GLsizei width, GLsizei height, int flags) {
+	char buf[512];
+	GLERR;
+	sprintf(buf, "Creating render texture (struct) %d, %d", width, height);
+	LOG_INFO(buf);
+	assert(0 != rt);
+
+	// Set all to zero
+	rt->texture = 0;
+	rt->depth = 0;
+	rt->framebuffer = 0;
+
+	rt->width = 0;
+	rt->height = 0;
+
+	GLuint render_tex[2] = { 0 , 0 };
+	GLuint framebuff = 0;
+
+	// Create the color attachment
+	glCreateTextures(GL_TEXTURE_2D, 1 + (true == (flags & RTFLAG_DEPTH)), render_tex);
+	GL_ERROR();
+	glTextureStorage2D(render_tex[0], 1, GL_RGBA32F, width, height);
+	GL_ERROR();
+	// And optionally, depth attachment
+	if(flags & RTFLAG_DEPTH) {
+		glTextureStorage2D(render_tex[1], 1, GL_DEPTH_COMPONENT32F, width, height);
+		GL_ERROR();
+	}
+
+	// Create framebuffer
+	glCreateFramebuffers(1, &framebuff);
+	GL_ERROR();
+	glNamedFramebufferTexture(framebuff, GL_COLOR_ATTACHMENT0, render_tex[0], 0);
+	GL_ERROR();
+	// Optionally, attach depth
+	if(flags & RTFLAG_DEPTH) {
+		glNamedFramebufferTexture(framebuff, GL_DEPTH_ATTACHMENT, render_tex[1], 0);
+		GL_ERROR();
+	}
+
+	if(GL_FRAMEBUFFER_COMPLETE != glCheckNamedFramebufferStatus(framebuff, GL_FRAMEBUFFER)) {
+		return false;
+	}
+	
+	// Fill struct
+	rt->texture = render_tex[0];
+	rt->depth = render_tex[1];
+	rt->framebuffer = framebuff;
+	rt->width = width;
+	rt->height = height;
+
+	return true;
+}
+
+void DestroyRenderTexture(render_texture_t* rt) {
+	assert(0 != rt);
+	LOG_INFO("Destroying Render Texture");
+
+	glDeleteTextures(1, &rt->texture);
+	glDeleteTextures(1, &rt->depth);
+	glDeleteFramebuffers(1, &rt->framebuffer);
+
+	rt->texture = 0;
+	rt->depth = 0;
+	rt->framebuffer = 0;
+}

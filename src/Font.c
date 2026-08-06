@@ -116,9 +116,8 @@ bool CreateFontWithAtlas(font_descriptor_t font_desc, font_t* font, float size) 
 
 void DestroyFont(font_t* font) {
 	assert(0 != font);
-
 	glDeleteTextures(1, &font->font_atlas);
-	font->font_atlas = -1;
+	font->font_atlas = 0;
 	font->size = 0.0f;
 	font->w = 0.0f;
 	font->h = 0.0f;
