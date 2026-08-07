@@ -109,7 +109,7 @@ void BindConstantBuffer(const GLuint buffer, int index) {
 	assert(buffer > 0);
 	GLERR;
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer);
+	glBindBufferBase(GL_UNIFORM_BUFFER, index, buffer);
 	GL_ERROR();
 }
 
