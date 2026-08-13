@@ -6,4 +6,4 @@ include/sal.h
 demo/*
 CMakeSettings.json
 *~
-*.swp
+*.sw*
