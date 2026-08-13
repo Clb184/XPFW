@@ -217,7 +217,7 @@ bool LoadTextureFromMemory(char* data, GLuint* tex_unit, texture_metric_t* metri
 }
 
 bool CreateEmptyTexture(GLuint* tex_unit,int color) {
-	LOG_INFO("Creating emprty texture");
+	LOG_INFO("Creating empty texture");
 	assert(0 != tex_unit);
 	int* pixels = calloc(256 * 256 * 4, 1); // Color is 32 bits
 	memset(pixels, color, 256 * 256 * 4);
