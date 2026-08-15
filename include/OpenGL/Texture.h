@@ -37,6 +37,8 @@ bool CreateRenderTexture(GLuint* tex_unit, GLuint* framebuffer, GLsizei width, G
 
 bool CreateRenderTextureA(render_texture_t* rt, GLsizei width, GLsizei height, int flags); 
 
+int CheckRenderTexture(render_texture_t* rt); // Return 0 to see it exists
+
 void DestroyRenderTexture(render_texture_t* rt);
 
 #ifdef __cplusplus

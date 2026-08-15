@@ -309,6 +309,13 @@ bool CreateRenderTextureA(render_texture_t* rt, GLsizei width, GLsizei height, i
 	return true;
 }
 
+int CheckRenderTexture(render_texture_t* rt){
+	assert(0 != rt);
+	LOG_INFO("Check Render Texture");
+	GLboolean valid = GL_TRUE == glIsTexture(rt->texture) && GL_TRUE == glIsFramebuffer(rt->framebuffer);
+	int ret = (valid == GL_TRUE) ? 1 : 0;
+}
+
 void DestroyRenderTexture(render_texture_t* rt) {
 	assert(0 != rt);
 	LOG_INFO("Destroying Render Texture");
