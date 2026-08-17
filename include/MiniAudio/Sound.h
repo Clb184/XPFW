@@ -4,6 +4,7 @@
 #include <miniaudio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <threads.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,17 +48,23 @@ typedef struct {
 } music_stream_t;
 
 typedef struct  {
+	mtx_t mutex;
 	ma_device device;
 	sound_buffer_container_t sounds;
 	music_stream_t music;
+	float music_volume;
+	float sound_volume;
 } sound_control_t;
 
 // Initialize decoder and sound device
 bool InitializeSoundControl(sound_control_t* sound_control, int num_sound_buffers);
 void DestroySoundControl(sound_control_t* sound_control);
 
-// Set master volume
+// Set master volume, ranges from 0.0 to 1.0
 void SetSoundMasterVolume(sound_control_t* sound_control, float level);
+
+// Set volume for each, sound and BGM individually, same 0.0 - 1.0 range
+void SetSoundMusicVolume(sound_control_t* sound_control, float snd, float bgm);
 
 // Create n buffers to play sound
 bool LoadSoundFromFile(sound_control_t* sound_control, int index, int cnt, const char* filename);

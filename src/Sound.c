@@ -6,6 +6,12 @@
 bool InitializeSoundControl(sound_control_t* sound_control, int num_sound_buffers) {
 	LOG_INFO("Initializing Sound Control");
 	assert(0 != sound_control);
+	
+	if(thrd_success != mtx_init(&sound_control->mutex, mtx_plain)) {
+		LOG_ERROR("Failed initializing Mutex");
+		return false;
+	}
+	mtx_lock(&sound_control->mutex);
 
 	ma_device_config cfg;
 	cfg = ma_device_config_init(ma_device_type_playback);
@@ -48,10 +54,12 @@ bool InitializeSoundControl(sound_control_t* sound_control, int num_sound_buffer
 		return false;
 	}
 
+	mtx_unlock(&sound_control->mutex);
 	return true;
 }
 
 void DestroySoundControl(sound_control_t* sound_control) {
+	mtx_lock(&sound_control->mutex);
 	LOG_INFO("Destroying Sound Control");
 	assert(0 != sound_control);
 	ma_device_uninit(&sound_control->device);
@@ -72,14 +80,25 @@ void DestroySoundControl(sound_control_t* sound_control) {
 		free(sound_control->music.samples);
 		sound_control->music.samples = 0;
 	}
+	mtx_unlock(&sound_control->mutex);
 }
 
 void SetSoundMasterVolume(sound_control_t* sound_control, float level) {
+	mtx_lock(&sound_control->mutex);
 	assert(0 != sound_control);
 	ma_device_set_master_volume(&sound_control->device, level);
+	mtx_unlock(&sound_control->mutex);
+}
+
+void SetSoundMusicVolume(sound_control_t* sound_control, float snd, float bgm) {
+	mtx_lock(&sound_control->mutex);
+	sound_control->sound_volume = snd;
+	sound_control->music_volume = bgm;
+	mtx_unlock(&sound_control->mutex);
 }
 
 bool LoadSoundFromFile(sound_control_t* sound_control, int index, int cnt, const char* filename) {
+	mtx_lock(&sound_control->mutex);
 	char buf[256] = "";
 	sprintf(buf, "Creating Sound Buffer (%d) for \"%s\" x%d", index, filename, cnt);
 	LOG_INFO(buf);
@@ -106,9 +125,11 @@ bool LoadSoundFromFile(sound_control_t* sound_control, int index, int cnt, const
 	for (int i = 0; i < cnt; i++) {
 		res = ma_audio_buffer_init(&cfg, &sound_buffer->buffers[i].buffer_info);
 	}
+	mtx_unlock(&sound_control->mutex);
 }
 
 bool LoadSoundFromMemory(sound_control_t* sound_control, int index, int cnt, char* data, size_t size) {
+	mtx_lock(&sound_control->mutex);
 	char buf[256] = "";
 	sprintf(buf, "Creating Sound Buffer (%d) from memory data x%d", index, cnt);
 	LOG_INFO(buf);
@@ -135,9 +156,11 @@ bool LoadSoundFromMemory(sound_control_t* sound_control, int index, int cnt, cha
 	for (int i = 0; i < cnt; i++) {
 		res = ma_audio_buffer_init(&cfg, &sound_buffer->buffers[i].buffer_info);
 	}
+	mtx_unlock(&sound_control->mutex);
 }
 
 void DestroySoundBuffer(sound_control_t* sound_control, int index) {
+	mtx_lock(&sound_control->mutex);
 	LOG_INFO("Destroying Sound Buffer");
 	assert(0 != sound_control);
 	assert(0 != sound_control->sounds.sound_buffers);
@@ -157,6 +180,7 @@ void DestroySoundBuffer(sound_control_t* sound_control, int index) {
 		free(sound_buffer->data); // Delete the PCM data as is not needed anymore
 		sound_buffer->data = 0;
 	}
+	mtx_unlock(&sound_control->mutex);
 }
 
 void PlaySnd(sound_control_t* sound_control, int index) {
@@ -187,6 +211,7 @@ void PlaySndX(sound_control_t* sound_control, int index, float x) {
 
 
 int LoadMusicFromFile(sound_control_t* sound_control, const char* filename) {
+	mtx_lock(&sound_control->mutex);
 	char buf[256];
 	sprintf(buf, "Loading music file \"%s\"", filename);
 	LOG_INFO(buf);
@@ -212,10 +237,12 @@ int LoadMusicFromFile(sound_control_t* sound_control, const char* filename) {
 	sound_control->music.samples = vorbis.sample_data;
 	sound_control->music.num_channels = vorbis.channels;
 	sound_control->music.cursor = 0;
+	mtx_unlock(&sound_control->mutex);
 	return 0;
 }
 
 int LoadMusicFromMemory(sound_control_t* sound_control, char* data, size_t size){
+	mtx_lock(&sound_control->mutex);
 	LOG_INFO("Loading music from Memory");
 	assert(0 != sound_control);
 
@@ -239,6 +266,7 @@ int LoadMusicFromMemory(sound_control_t* sound_control, char* data, size_t size)
 	sound_control->music.samples = vorbis.sample_data;
 	sound_control->music.num_channels = vorbis.channels;
 	sound_control->music.cursor = 0;
+	mtx_unlock(&sound_control->mutex);
 	return 0;
 }
 
@@ -324,6 +352,7 @@ void SoundBufferPlayback(ma_device* pDevice, void* pOutput, const void* pInput, 
 
 	assert(0 != all_buffer);
 	assert(0 != all_buffer->sound_buffers);
+	mtx_lock(&snd_control->mutex);
 
 	int num_sbuffers = all_buffer->cnt;
 	
@@ -403,4 +432,5 @@ void SoundBufferPlayback(ma_device* pDevice, void* pOutput, const void* pInput, 
 			}
 		}
 	}
+	mtx_unlock(&snd_control->mutex);
 }
